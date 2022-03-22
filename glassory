@@ -1,0 +1,5 @@
+# numberOfES = sum(1 for s in entryList if 'ES' in s) + sum(1 for s in exitsList if 'ES' in s)
+
+    # print to ini file
+    inifile = open(iniFileName, "a")
+    inifile.write("\n")
