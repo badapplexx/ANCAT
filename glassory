@@ -3,3 +3,34 @@
     # print to ini file
     inifile = open(iniFileName, "a")
     inifile.write("\n")
+
+
+endOfFile = sheet3[sheet3.isnull().all(axis=1) == True].index.tolist()[0] # get final line number
+ESNamesList = sheet3[Sheet3_column1].values.tolist()
+sourceIDList = sheet3[Sheet3_column2].values.toList()
+sourceDatarateList = sheet3[Sheet3_column3].values.toList()
+cableLengthList = sheet3[Sheet3_column4].values.tolist()
+vlidList = sheet3[Sheet3_column5].values.tolist()
+startTimeList = sheet3[Sheet3_column6].values.tolist()
+stopTimeList = sheet3[Sheet3_column7].values.tolist()
+BAGList = sheet3[Sheet3_column8].values.tolist()
+periodList = sheet3[Sheet3_column9].values.tolist()
+deltaPeriodList = sheet3[Sheet3_column10].values.tolist()
+payloadLengthList = sheet3[Sheet3_column11].values.tolist()
+deltaPayloadLengthList = sheet3[Sheet3_column12].values.tolist()
+rhoList = sheet3[Sheet3_column13].values.tolist()
+sigmaList = sheet3[Sheet3_column14].values.tolist()
+
+ESNamesList = ESNamesList[0:endOfFile]
+sourceIDList = sourceIDList[0:endOfFile]
+sourceDatarateList = sourceDatarateList[0:endOfFile]
+vlidList = vlidList[0:endOfFile]
+startTimeList = startTimeList[0:endOfFile]
+stopTimeList = stopTimeList[0:endOfFile]
+BAGList = BAGList[0:endOfFile]
+periodList = periodList[0:endOfFile]
+deltaPeriodList = deltaPeriodList[0:endOfFile]
+payloadLengthList = payloadLengthList[0:endOfFile]
+deltaPayloadLengthList = deltaPayloadLengthList[0:endOfFile]
+rhoList = rhoList[0:endOfFile]
+sigmaList = sigmaList[0:endOfFile]
