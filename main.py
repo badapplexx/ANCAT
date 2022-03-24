@@ -115,8 +115,23 @@ for rowIndex in range(endOfFile):
             iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].virtualLinkId = {row[colIndex]} "
         if colIndex == 5:  # col: startTime
             iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].startTime = {row[colIndex]} "
-
-    print(iniStringMessageSet)
+        if colIndex == 6:  # col: stopTime
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].stopTime = {row[colIndex]} "
+        if colIndex == 7:  # col: BAG
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].BAG = {row[colIndex]} "
+        if colIndex == 8:  # col: Period
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].interArrivalTime = {row[colIndex]} "
+        if colIndex == 9:  # col: delta Period
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].deltaInterArrivalTimeMaxLimit = {row[colIndex]} "
+        if colIndex == 10:  # col: Payload Length
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].packetLength = {row[colIndex]} "
+        if colIndex == 11:  # col: Delta Payload Length
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].deltaPacketLengthMaxLimit = {row[colIndex]} "
+        if colIndex == 12:  # col: rho
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].rho = {row[colIndex]} "
+        if colIndex == 13:  # col: sigma
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].sigma = {row[colIndex]} "
+    print(iniStringMessageSet[rowIndex])
 print("over")
 ############################# PART2 #############################
 ##################### CREATE and FILL *.ini #####################
