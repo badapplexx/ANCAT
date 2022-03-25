@@ -34,3 +34,19 @@ payloadLengthList = payloadLengthList[0:endOfFile]
 deltaPayloadLengthList = deltaPayloadLengthList[0:endOfFile]
 rhoList = rhoList[0:endOfFile]
 sigmaList = sigmaList[0:endOfFile]
+
+
+Sheet3_column1 = "End Systems"
+Sheet3_column2 = "Source ID"
+Sheet3_column3 = "Datarate of source"
+Sheet3_column4 = "Cable Length"
+Sheet3_column5 = "VLID"
+Sheet3_column6 = "startTime"
+Sheet3_column7 = "stopTime"
+Sheet3_column8 = "BAG"
+Sheet3_column9 = "Payload Length"
+Sheet3_column10 = "Delta Payload Length"
+Sheet3_column11 = "Period"
+Sheet3_column12 = "Delta Period"
+Sheet3_column13 = "rho"
+Sheet3_column14 = "sigma"
