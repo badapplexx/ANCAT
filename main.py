@@ -6,7 +6,7 @@ import pandas as pd
 # Get: numberOfES, numberOfSW, entryList, exitsList values
 
 # CONSTANTS AND SETTINGS
-inputFileName = "Config.xlsx"
+inputFileName = "Config2.xlsx"
 sheet1Name = "Topology"
 sheet1_column1Name = "Entry"
 sheet1_column2Name = "Exit"
@@ -16,10 +16,10 @@ sheet2_column2Name = "Value"
 sheet3Name = "End Systems"
 sheet3_column1Name = "End System"
 
-iniFileName = "Network.ini"
+iniFileName = "AutoNetwork.ini"
 endSystemIndicator = "ES"
 switchIndicator = "SW"
-networkName = "AFDXNetwork"
+networkName = "Deneme"
 
 # SOME DECLARATIONS
 iniString1Header = ""
@@ -59,6 +59,7 @@ vlQueueLength = settingValuesList[settingNamesList.index("VL Queue size")]
 switchSchServiceTime = "0"
 def_isSkewMaxTestEnabled = "false"
 def_networkID = "0x99"
+def_equipmentID = "0x66"
 def_interfaceID = "0"
 def_seqNum = "0"
 def_udpSrcPort = "0x1234"
@@ -144,7 +145,8 @@ iniString6ESGeneral_TechDelays = f"**.scheduler.serviceTime = {switchSchServiceT
 iniString7ESGeneral_skewMax = f"**.redundancyChecker.skewMax = {skewMax}"
 iniString8ESGeneralVLQueueLength = f"**.regulatorLogic.maxVLIDQueueSize = {vlQueueLength}"
 # ==========================================
-iniString9ESGeneral_defaults = f"**.afdxMarshall[*].networkId = {def_networkID}\n"
+iniString9ESGeneral_defaults += f"**.afdxMarshall[*].networkId = {def_networkID}\n"
+iniString9ESGeneral_defaults += f"**.afdxMarshall[*].equipmentId = {def_equipmentID}\n"
 iniString9ESGeneral_defaults += f"**.afdxMarshall[*].interfaceId = {def_interfaceID}\n"
 iniString9ESGeneral_defaults += f"**.afdxMarshall[*].seqNum = {def_seqNum}\n"
 iniString9ESGeneral_defaults += f"**.afdxMarshall[*].udpSrcPort = {def_udpSrcPort}\n"
@@ -176,7 +178,8 @@ for rowIndex in range(endOfFile):
         if colIndex == 3:  # col: Cable length
             iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].cableLength = {row[colIndex]} "
         if colIndex == 4:  # col: VLID
-            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].virtualLinkId = {row[colIndex]} "
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].virtualLinkId = {row[colIndex]}\n "
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].partitionId = {row[colIndex]} "
         if colIndex == 5:  # col: startTime
             iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].startTime = {row[colIndex]} "
         if colIndex == 6:  # col: stopTime
@@ -190,11 +193,11 @@ for rowIndex in range(endOfFile):
         if colIndex == 10:  # col: Payload Length
             iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].packetLength = {row[colIndex]} "
         if colIndex == 11:  # col: Delta Payload Length
-            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].deltaPacketLengthMaxLimit = {row[colIndex]} "
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].deltaPacketLengthMaxLimit = {row[colIndex]} "
         if colIndex == 12:  # col: rho
-            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].rho = {row[colIndex]} "
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].rho = {row[colIndex]} "
         if colIndex == 13:  # col: sigma
-            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].sigma = {row[colIndex]} "
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].sigma = {row[colIndex]} "
         iniStringMessageSet[rowIndex] += "\n"
 # ==========================================
 # Open file and append strings
