@@ -14,6 +14,7 @@ sheet2Name = "Settings"
 sheet2_column1Name = "Setting"
 sheet2_column2Name = "Value"
 sheet3Name = "End Systems"
+sheet3_column1Name = "End System"
 
 iniFileName = "Network.ini"
 endSystemIndicator = "ES"
@@ -21,7 +22,6 @@ switchIndicator = "SW"
 networkName = "AFDXNetwork"
 
 # SOME DECLARATIONS
-
 iniString1Header = ""
 iniString2GenNetworkParams = ""
 iniString3Conndef = ""
@@ -32,23 +32,21 @@ iniString7ESGeneral_skewMax = ""
 iniString8ESGeneralVLQueueLength = ""
 iniString9ESGeneral_defaults = ""
 
-
 # get excel content
 with pd.ExcelFile(inputFileName) as file:
     sheet1 = pd.read_excel(file, sheet1Name)
     sheet2 = pd.read_excel(file, sheet2Name)
     sheet3 = pd.read_excel(file, sheet3Name)
 
-# get column one(for entry nodes) and column two(for exit nodes)
+# TOPOLOGY
 entryList = sheet1[sheet1_column1Name].values.tolist()
 exitsList = sheet1[sheet1_column2Name].values.tolist()
-#print(entryList)
-#print(exitsList)
 
 ## SETTINGS
 settingNamesList = sheet2[sheet2_column1Name].values.tolist()
 settingValuesList = sheet2[sheet2_column2Name].values.tolist()
 
+# get actual values
 switchTechDelay = settingValuesList[settingNamesList.index("Switch Tech Delay")]
 ESRxTechDelay = settingValuesList[settingNamesList.index("ES Rx Tech Delay")]
 ESTxTechDelay = settingValuesList[settingNamesList.index("ES Tx Tech Delay")]
@@ -67,20 +65,22 @@ def_udpSrcPort = "0x1234"
 def_udpDestPort = "0x5678"
 def_frameHeaderLength = "47"
 
-# Get message sets vs
-endOfFile = sheet3[sheet3.isnull().all(axis=1) == True].index.tolist()[0] # get final line number
+# MESSAGE SETS
+endOfFile = sheet3[sheet3.isnull().all(axis=1) == True].index.tolist()[0]  # get final line number
 headerList = sheet3.columns.tolist()
+
+endSystemNamesList = (sheet3[sheet3_column1Name].values.tolist())[0:endOfFile]
+UniqEndSystemNameList = pd.unique((sheet3[sheet3_column1Name].values.tolist())[0:endOfFile])
+
+# a = len(pd.unique((sheet3[sheet3_column1Name].values.tolist())[0:endOfFile]))  # for messageCount values, count unique ES names
 
 ############################# PART2 #############################
 ##################### CREATE and FILL *.ini #####################
 ### Header ###
 iniString1Header = "[General]\n" "**.vector-recording = true\n" "**.scalar-recording = true"
-#print(iniString1Header + "\n")
 
 ### Network Parameters ###
 iniString2GenNetworkParams = "#Network Params\n"  f"network = {networkName}"
-#print(iniString2GenNetworkParams + "\n")
-
 
 # Connection definitions: ex. ES1<->SW1 ..
 connDefEntryTypeString = "*.connDef[{}].isEntryAnEndsystem = {}"
@@ -95,9 +95,8 @@ connDefEntryTypeStringList = []
 connDefExitTypeStringList = []
 connDefEntryIndexStringList = []
 connDefExitIndexStringList = []
-
+# ==========================================
 # add values(ESn, SWn) in the column to a set to count unique occurrences
-# create appropriate lines for *.ini file
 i = 0
 for s in entryList:
     connDefEntryIndexStringList.append(connDefEntryIndexString.format(i, s[2:4]))
@@ -134,9 +133,7 @@ for s in connDefExitIndexStringList:
 iniString3Conndef += "\n"
 for s in connDefExitTypeStringList:
     iniString3Conndef += s + "\n"
-
-#print(iniString3Conndef + "\n")
-
+# ==========================================
 iniString4EthernetSettings = f"*.ethSpeed = {ethernetSpeed}\n*.cableLength = {ethernetCableLength}"
 iniString5ESGeneral_numberOfs = f"**.numberOfEndSystems = {numberOfES}\n" \
                                 f"**.numberOfSwitches = {numberOfSW}"
@@ -146,12 +143,7 @@ iniString6ESGeneral_TechDelays = f"**.scheduler.serviceTime = {switchSchServiceT
                                  f"**.ESGroup[*].latencyTechRx.delay = {ESRxTechDelay}"
 iniString7ESGeneral_skewMax = f"**.redundancyChecker.skewMax = {skewMax}"
 iniString8ESGeneralVLQueueLength = f"**.regulatorLogic.maxVLIDQueueSize = {vlQueueLength}"
-#print(iniString4EthernetSettings)
-#print(iniString5ESGeneral_numberOfs)
-#print(iniString6ESGeneral_TechDelays)
-#print(iniString7ESGeneral_skewMax)
-#print(iniString8ESGeneralVLQueueLength + "\n")
-
+# ==========================================
 iniString9ESGeneral_defaults = f"**.afdxMarshall[*].networkId = {def_networkID}\n"
 iniString9ESGeneral_defaults += f"**.afdxMarshall[*].interfaceId = {def_interfaceID}\n"
 iniString9ESGeneral_defaults += f"**.afdxMarshall[*].seqNum = {def_seqNum}\n"
@@ -159,10 +151,15 @@ iniString9ESGeneral_defaults += f"**.afdxMarshall[*].udpSrcPort = {def_udpSrcPor
 iniString9ESGeneral_defaults += f"**.afdxMarshall[*].udpDestPort = {def_udpDestPort}\n"
 iniString9ESGeneral_defaults += f"**.afdxMarshall[*].frameHeaderLength = {def_frameHeaderLength}\n"
 iniString9ESGeneral_defaults += f"**.skewMaxTester.skewMaxTestEnabled = {def_isSkewMaxTestEnabled}"
-#print(iniString9ESGeneral_defaults + "\n")
-
-
+# ==========================================
 # Per end system parameters
+# message counts
+iniStringMessageCount = [" "]*len(UniqEndSystemNameList)
+for es in UniqEndSystemNameList:
+    ix = int(es[2:4])
+    iniStringMessageCount[ix] = f"**.ESGroup[{ix}].messageCount = {endSystemNamesList.count(es)}\n"
+# ==========================================
+# other details
 iniStringMessageSet = [" "]*endOfFile
 for rowIndex in range(endOfFile):
     esIndex = 0
@@ -199,12 +196,9 @@ for rowIndex in range(endOfFile):
         if colIndex == 13:  # col: sigma
             iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].sigma = {row[colIndex]} "
         iniStringMessageSet[rowIndex] += "\n"
-    #print(iniStringMessageSet[rowIndex])
-
-
-# Open a file with access mode 'a'
+# ==========================================
+# Open file and append strings
 iniFile = open(iniFileName, 'w')
-# Append 'hello' at the end of file
 iniFile.write(iniString1Header + "\n\n")
 iniFile.write(iniString2GenNetworkParams + "\n\n")
 iniFile.write(iniString3Conndef + "\n\n")
@@ -213,7 +207,9 @@ iniFile.write(iniString5ESGeneral_numberOfs + "\n")
 iniFile.write(iniString7ESGeneral_skewMax + "\n")
 iniFile.write(iniString8ESGeneralVLQueueLength + "\n")
 iniFile.write(iniString6ESGeneral_TechDelays + "\n")
-iniFile.write(iniString9ESGeneral_defaults + "\n")
+iniFile.write(iniString9ESGeneral_defaults + "\n\n")
+for str in iniStringMessageCount:
+    iniFile.write(str)
 for str in iniStringMessageSet:
     iniFile.write(str)
 # Close the file
