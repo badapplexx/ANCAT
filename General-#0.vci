@@ -1,0 +1,229 @@
+file 1446250 1647979339                                         
+version 2
+run General-0-20220322-23:02:11-14144
+attr configname General
+attr datetime 20220322-23:02:11
+attr experiment General
+attr inifile Deneme.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network Deneme
+attr processid 14144
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 0
+param *.ethSpeed 100Mbps
+param *.cableLength 0m
+param *.connDef[0].isEntryAnEndsystem true
+param *.connDef[1].isEntryAnEndsystem true
+param *.connDef[2].isEntryAnEndsystem true
+param *.connDef[3].isEntryAnEndsystem true
+param *.connDef[4].isEntryAnEndsystem true
+param *.connDef[5].isEntryAnEndsystem false
+param *.connDef[6].isEntryAnEndsystem false
+param *.connDef[7].isEntryAnEndsystem true
+param *.connDef[8].isEntryAnEndsystem true
+param *.connDef[9].isEntryAnEndsystem false
+param *.connDef[10].isEntryAnEndsystem false
+param *.connDef[11].isEntryAnEndsystem false
+param *.connDef[0].isExitAnEndsystem false
+param *.connDef[1].isExitAnEndsystem false
+param *.connDef[2].isExitAnEndsystem false
+param *.connDef[3].isExitAnEndsystem false
+param *.connDef[4].isExitAnEndsystem false
+param *.connDef[5].isExitAnEndsystem false
+param *.connDef[6].isExitAnEndsystem false
+param *.connDef[7].isExitAnEndsystem false
+param *.connDef[8].isExitAnEndsystem false
+param *.connDef[9].isExitAnEndsystem false
+param *.connDef[10].isExitAnEndsystem true
+param *.connDef[11].isExitAnEndsystem true
+param *.connDef[0].entryIndex 0
+param *.connDef[1].entryIndex 1
+param *.connDef[2].entryIndex 2
+param *.connDef[3].entryIndex 3
+param *.connDef[4].entryIndex 4
+param *.connDef[5].entryIndex 0
+param *.connDef[6].entryIndex 1
+param *.connDef[7].entryIndex 5
+param *.connDef[8].entryIndex 6
+param *.connDef[9].entryIndex 2
+param *.connDef[10].entryIndex 3
+param *.connDef[11].entryIndex 3
+param *.connDef[0].exitIndex 0
+param *.connDef[1].exitIndex 0
+param *.connDef[2].exitIndex 0
+param *.connDef[3].exitIndex 1
+param *.connDef[4].exitIndex 1
+param *.connDef[5].exitIndex 2
+param *.connDef[6].exitIndex 2
+param *.connDef[7].exitIndex 2
+param *.connDef[8].exitIndex 2
+param *.connDef[9].exitIndex 3
+param *.connDef[10].exitIndex 7
+param *.connDef[11].exitIndex 8
+param **.scheduler.serviceTime 0s
+param **.switchFabric.delay.delay 0.000004s
+param *.SwitchA[0].switchFabric.router.configTableName "\"Deneme_sw0.txt\""
+param *.SwitchA[1].switchFabric.router.configTableName "\"Deneme_sw1.txt\""
+param *.SwitchA[2].switchFabric.router.configTableName "\"Deneme_sw2.txt\""
+param *.SwitchA[3].switchFabric.router.configTableName "\"Deneme_sw3.txt\""
+param *.SwitchB[0].switchFabric.router.configTableName "\"Deneme_sw0.txt\""
+param *.SwitchB[1].switchFabric.router.configTableName "\"Deneme_sw1.txt\""
+param *.SwitchB[2].switchFabric.router.configTableName "\"Deneme_sw2.txt\""
+param *.SwitchB[3].switchFabric.router.configTableName "\"Deneme_sw3.txt\""
+param **.numberOfEndSystems 9
+param **.numberOfSwitches 4
+param **.ESGroup[0].messageCount 1
+param **.ESGroup[1].messageCount 1
+param **.ESGroup[2].messageCount 1
+param **.ESGroup[3].messageCount 1
+param **.ESGroup[4].messageCount 1
+param **.ESGroup[5].messageCount 0
+param **.ESGroup[6].messageCount 0
+param **.ESGroup[7].messageCount 0
+param **.ESGroup[8].messageCount 0
+param **.ESGroup[*].*.delay 0.000032s
+param **.skewMaxTester.skewMaxTestEnabled false
+param **.redundancyChecker.skewMax 10ms
+param **.regulatorLogic.maxVLIDQueueSize 1000
+param **.stopTime 1s
+param **.startTime 0s
+param **.trafficSource[*].baudrate 0bps
+param **.trafficSource[*].cableLength 0m
+param **.trafficSource[*].deltaInterArrivalTimeMaxLimit 0s
+param **.trafficSource[*].packetLength 1183
+param **.ESGroup[0].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[1].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[2].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[3].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[4].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[5].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[6].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[7].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[8].trafficSource[*].interArrivalTime 0.001s
+param **.ESGroup[0].trafficSource[*].partitionId 1
+param **.ESGroup[1].trafficSource[*].partitionId 2
+param **.ESGroup[2].trafficSource[*].partitionId 3
+param **.ESGroup[3].trafficSource[*].partitionId 4
+param **.ESGroup[4].trafficSource[*].partitionId 5
+param **.ESGroup[5].trafficSource[*].partitionId 6
+param **.ESGroup[6].trafficSource[*].partitionId 7
+param **.ESGroup[7].trafficSource[*].partitionId 8
+param **.ESGroup[8].trafficSource[*].partitionId 9
+param **.afdxMarshall[*].networkId 88
+param **.afdxMarshall[*].interfaceId 0
+param **.afdxMarshall[*].seqNum 0
+param **.afdxMarshall[*].udpSrcPort 0x1234
+param **.afdxMarshall[*].udpDestPort 0x5678
+param **.afdxMarshall[*].frameHeaderLength 47
+param **.afdxMarshall[*].rho 10
+param **.afdxMarshall[*].sigma 15000
+param **.afdxMarshall[*].Lmax 1183
+param **.afdxMarshall[*].deltaPacketLengthMaxLimit 0
+param *.ESGroup[0].afdxMarshall[*].equipmentId 1
+param *.ESGroup[1].afdxMarshall[*].equipmentId 2
+param *.ESGroup[2].afdxMarshall[*].equipmentId 3
+param *.ESGroup[3].afdxMarshall[*].equipmentId 4
+param *.ESGroup[4].afdxMarshall[*].equipmentId 5
+param *.ESGroup[5].afdxMarshall[*].equipmentId 6
+param *.ESGroup[6].afdxMarshall[*].equipmentId 7
+param *.ESGroup[7].afdxMarshall[*].equipmentId 8
+param *.ESGroup[8].afdxMarshall[*].equipmentId 9
+param **.ESGroup[0].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[1].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[2].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[3].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[4].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[5].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[6].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[7].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[8].afdxMarshall[*].BAG 0.001s
+param **.ESGroup[0].afdxMarshall[*].virtualLinkId 1
+param **.ESGroup[1].afdxMarshall[*].virtualLinkId 2
+param **.ESGroup[2].afdxMarshall[*].virtualLinkId 3
+param **.ESGroup[3].afdxMarshall[*].virtualLinkId 4
+param **.ESGroup[4].afdxMarshall[*].virtualLinkId 5
+param **.ESGroup[5].afdxMarshall[*].virtualLinkId 6
+param **.ESGroup[6].afdxMarshall[*].virtualLinkId 7
+param **.ESGroup[7].afdxMarshall[*].virtualLinkId 8
+param **.ESGroup[8].afdxMarshall[*].virtualLinkId 9
+
+vector 0 Deneme.ESGroup[0].afdxMarshall[0] sourceRecorder_1 ETV
+vector 1 Deneme.ESGroup[1].afdxMarshall[0] sourceRecorder_2 ETV
+vector 2 Deneme.ESGroup[2].afdxMarshall[0] sourceRecorder_3 ETV
+vector 3 Deneme.ESGroup[3].afdxMarshall[0] sourceRecorder_4 ETV
+vector 4 Deneme.ESGroup[4].afdxMarshall[0] sourceRecorder_5 ETV
+vector 5 Deneme.ESGroup[0].afdxMarshall[0] bagRecorder_1 ETV
+vector 6 Deneme.ESGroup[1].afdxMarshall[0] bagRecorder_2 ETV
+vector 7 Deneme.ESGroup[2].afdxMarshall[0] bagRecorder_3 ETV
+vector 8 Deneme.ESGroup[3].afdxMarshall[0] bagRecorder_4 ETV
+vector 9 Deneme.ESGroup[4].afdxMarshall[0] bagRecorder_5 ETV
+vector 10 Deneme.ESGroup[0].afdxMarshall[0] periodicityAtESOut_1 ETV
+vector 11 Deneme.ESGroup[1].afdxMarshall[0] periodicityAtESOut_2 ETV
+vector 12 Deneme.ESGroup[2].afdxMarshall[0] periodicityAtESOut_3 ETV
+vector 13 Deneme.ESGroup[3].afdxMarshall[0] periodicityAtESOut_4 ETV
+vector 14 Deneme.ESGroup[4].afdxMarshall[0] periodicityAtESOut_5 ETV
+vector 15 Deneme.SwitchA[0].switchFabric.priorityClassifier entry_23 ETV
+vector 16 Deneme.SwitchA[1].switchFabric.priorityClassifier entry_24 ETV
+vector 17 Deneme.SwitchA[0].switchFabric.priorityClassifier exit_23 ETV
+vector 18 Deneme.SwitchA[0].switchFabric.priorityClassifier packetCount_23 ETV
+vector 19 Deneme.SwitchA[1].switchFabric.priorityClassifier exit_24 ETV
+vector 20 Deneme.SwitchA[1].switchFabric.priorityClassifier packetCount_24 ETV
+vector 21 Deneme.SwitchA[2].switchFabric.priorityClassifier entry_25 ETV
+vector 22 Deneme.SwitchA[2].switchFabric.priorityClassifier exit_25 ETV
+vector 23 Deneme.SwitchA[2].switchFabric.priorityClassifier packetCount_25 ETV
+vector 24 Deneme.SwitchA[3].switchFabric.priorityClassifier entry_26 ETV
+vector 25 Deneme.SwitchA[3].switchFabric.priorityClassifier exit_26 ETV
+vector 26 Deneme.SwitchA[3].switchFabric.priorityClassifier packetCount_26 ETV
+vector 27 Deneme.ESGroup[0].afdxMarshall[0] BitCountDis_1 ETV
+vector 28 Deneme.ESGroup[0].afdxMarshall[0] BitCountCum_1 ETV
+vector 29 Deneme.ESGroup[1].afdxMarshall[0] BitCountDis_2 ETV
+vector 30 Deneme.ESGroup[1].afdxMarshall[0] BitCountCum_2 ETV
+vector 31 Deneme.ESGroup[3].afdxMarshall[0] BitCountDis_4 ETV
+vector 32 Deneme.ESGroup[3].afdxMarshall[0] BitCountCum_4 ETV
+vector 33 Deneme.ESGroup[2].afdxMarshall[0] BitCountDis_3 ETV
+vector 34 Deneme.ESGroup[2].afdxMarshall[0] BitCountCum_3 ETV
+vector 35 Deneme.ESGroup[4].afdxMarshall[0] BitCountDis_5 ETV
+vector 36 Deneme.ESGroup[4].afdxMarshall[0] BitCountCum_5 ETV
+0	9074 17627 6 431569 0 0.999 1000 1 1 1000 1000
+1	26701 17627 7 431570 0 0.999 1000 2 2 2000 4000
+2	44328 17627 8 431571 0 0.999 1000 3 3 3000 9000
+3	61955 17627 9 431572 0 0.999 1000 4 4 4000 16000
+4	79582 17628 10 431573 0 0.999 1000 5 5 5000 25000
+5	97210 20740 26 431594 0.000032 0.999032 1000 1 1 1000 1000
+6	117950 20740 27 431595 0.000032 0.999032 1000 2 2 2000 4000
+7	138690 20740 28 431596 0.000032 0.999032 1000 3 3 3000 9000
+8	159430 20740 29 431597 0.000032 0.999032 1000 4 4 4000 16000
+9	180170 20740 30 431598 0.000032 0.999032 1000 5 5 5000 25000
+10	200910 21740 41 431609 0.000032 0.999032 1000 1 1 1000 1000
+11	222650 21740 43 431611 0.000032 0.999032 1000 2 2 2000 4000
+12	244390 21740 45 431613 0.000032 0.999032 1000 3 3 3000 9000
+13	266130 21740 47 431615 0.000032 0.999032 1000 4 4 4000 16000
+14	287870 21740 49 431617 0.000032 0.999032 1000 5 5 5000 25000
+15	309610 71220 51 431623 0.00013104 0.99913104 3000 1 3 6000 14000
+16	380830 47480 57 431627 0.00013104 0.99913104 2000 4 5 9000 41000
+17	428310 71231 171 431835 0.00013504 0.99933504 3000 1 3 6000 14000
+18	499541 71231 171 431835 0.00013504 0.99933504 3000 0 0 0 0
+19	570772 47487 173 431781 0.00013504 0.99923504 2000 4 5 9000 41000
+20	618259 47487 173 431781 0.00013504 0.99923504 2000 0 0 0 0
+21	665746 118718 175 431892 0.00023408 0.99943408 5000 1 5 15000 55000
+22	784464 118720 227 431945 0.00023808 0.99943808 5000 1 5 15000 55000
+23	903184 118720 227 431945 0.00023808 0.99943808 5000 0 0 0 0
+24	1021904 47488 271 431912 0.00033712 0.99943712 2000 4 5 9000 41000
+25	1069392 47488 320 431964 0.00034112 0.99944112 2000 4 5 9000 41000
+26	1116880 47488 320 431964 0.00034112 0.99944112 2000 0 0 0 0
+27	1164368 26744 323 431891 0.00036912 0.99936912 1000 9840 9840 9840000 96825600000
+28	1191112 29632 323 431891 0.00036912 0.99936912 1000 9840 9840000 4924920000 3.23236289376e+016
+29	1220744 26744 399 431967 0.00046912 0.99946912 1000 9840 9840 9840000 96825600000
+30	1247488 29632 399 431967 0.00046912 0.99946912 1000 9840 9840000 4924920000 3.23236289376e+016
+31	1277120 26744 401 431969 0.00047216 0.99947216 1000 9840 9840 9840000 96825600000
+32	1303864 29632 401 431969 0.00047216 0.99947216 1000 9840 9840000 4924920000 3.23236289376e+016
+33	1333496 26744 425 431993 0.00056912 0.99956912 1000 9840 9840 9840000 96825600000
+34	1360240 29632 425 431993 0.00056912 0.99956912 1000 9840 9840000 4924920000 3.23236289376e+016
+35	1389872 26744 427 431995 0.00057216 0.99957216 1000 9840 9840 9840000 96825600000
+36	1416616 29632 427 431995 0.00057216 0.99957216 1000 9840 9840000 4924920000 3.23236289376e+016
+
