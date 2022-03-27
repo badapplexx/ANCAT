@@ -5,6 +5,13 @@ from pylab import title, figure, xlabel, ylabel, xticks, bar, legend, axis, save
 from fpdf import FPDF
 from datetime import datetime
 import statistics
+from enum import Enum
+
+
+class RecordType(Enum):
+    NONE = 0
+    PER_VL = 1
+    PER_SWITCH = 2
 
 
 class Record:
@@ -12,12 +19,14 @@ class Record:
         self.index = -1
         self.block = ""
         self.name = ""
+        self.type = RecordType.NONE
+        self.id = -1
         self.count = 0
         self.time = []
         self.data = []
 
     def __str__(self):
-        return f"{self.index}: name='{self.name}', block='{self.block}', count='{len(self.data)}'"
+        return f"{self.index}: name='{self.name}#{self.id}', block='{self.block}', count='{len(self.data)}'"
 
     def addDataPoint(self, t, d):
         self.time.append(float(t))
@@ -54,8 +63,19 @@ def getData(dir):
             for i in range(dataCount):
                 records[i].index = i
                 records[i].block = vector_lines_splitted[i][2]
-                records[i].name = vector_lines_splitted[i][3]
                 records[i].count = data_lines_splitted[i][7]
+                name_splitted = vector_lines_splitted[i][3].split("_")
+                records[i].name = name_splitted[0]
+                if("VL" in name_splitted[1]):
+                    records[i].type = RecordType.PER_VL
+                    records[i].id = int(name_splitted[1][2:])
+                elif("SW" in name_splitted[1]):
+                    records[i].type = RecordType.PER_SWITCH
+                    records[i].id = int(name_splitted[1][2:])
+                else:
+                    records[i].type = RecordType.NONE
+                    records[i].id = int(name_splitted[1])
+
     # vec file operations
     for file in os.listdir(dir):
         if file.endswith(".vec"):
@@ -174,14 +194,20 @@ def saveReport(records):
     report.add_line_v2("- Maximum end-to-end latency4:", 0.14159)
     report.add_line_v2("- Maximum end-to-end latency4:", 0.14159)
     report.add_line_v2("- Maximum end-to-end latency4:", 0.14159)
-    report.image('plot_2d.png', x=None, y=None, w=100, h=0, type="", link="")
+    report.image("plot_2d.png", x=None, y=None, w=50, h=0, type="", link="")
+    report.add_line("width: 50")
+    report.image("plot_2d.png", x=None, y=None, w=100, h=0, type="", link="")
+    report.add_line("width: 100")
+    report.image("plot_2d.png", x=None, y=None, w=200, h=0, type="", link="")
+    report.add_line("width: 200")
+
 
     # save
     report.save()
 
 
 if __name__ == "__main__":
-    records = getData("C:\\Users\\ozerg\\Desktop\\Share\\tez\\results")
-    # printMultiRecord(records)
-    saveFigures(records)
-    saveReport(records)
+    records = getData(".")
+    printMultiRecord(records)
+    # saveFigures(records)
+    # saveReport(records)
