@@ -1,4 +1,5 @@
 import pandas as pd
+from dijkstar import Graph, find_path
 
 ############################# PART1 #############################
 ########################## READ EXCEL ###########################
@@ -34,15 +35,28 @@ iniString8ESGeneralVLQueueLength = ""
 iniString9ESGeneral_defaults = ""
 
 
-class Node:
-    def __init__(self, node_id, is_es, connected_node_id, is_connected_node_es):
-        self.nodeID = node_id
-        self.isES = is_es
-        self.connectedNodeID = connected_node_id
-        self.isConnectedNodeES = is_connected_node_es
+class ConnectionNode:
+    def __init__(self, s):
+        for c in s:
+            if c.isdigit():
+                self.id = int(s[s.index(c):])
+                self.is_es = True if endSystemIndicator in s else False
+                break
+
+    def __str__(self):
+        return ("ES" if self.is_es else "SW")+f"{self.id}"
+
+    def __repr__(self):
+        return ("ES" if self.is_es else "SW")+f"{self.id}"
+
+    def __eq__(self, other):
+        return (self.id == other.id) and (self.is_es == other.is_es)
+
+    def __hash__(self):
+        return hash(("ES" if self.is_es else "SW") + f"{self.id}")
 
 
-class EndSystem(Node):
+class EndSystemInfo():
     def __init__(self, id):
         self.sourceID = ""
         self.sourceDatarate = ""
@@ -57,7 +71,10 @@ class EndSystem(Node):
         self.deltaPayloadLength = ""
         self.rho = ""
         self.sigma = ""
-        Node.__init__(self)
+        self.nodeID = 0
+        self.isES = False
+        self.connectedNodeID = 0
+        self.isConnectedNodeES = False
 
 
 # get excel content
@@ -119,57 +136,43 @@ connDefExitIndexString = "*.connDef[{}].exitIndex = {}"
 
 
 # initialize Parameters
-ESSet = set()
-SWSet = set()
 connDefEntryTypeStringList = []
 connDefExitTypeStringList = []
 connDefEntryIndexStringList = []
 connDefExitIndexStringList = []
 # ==========================================
 # add values(ESn, SWn) in the column to a set to count unique occurrences
-nodes = []
-numberOfSW = 0
-numberOfES = 0
 
-for k in range(len(entryList)):
-    entryNode = entryList[k]
-    exitNode = exitsList[k]
-    if endSystemIndicator in entryNode:  # entryNode is an ES
-        ESSet.add(entryNode)
-        if endSystemIndicator in exitNode: # exitNode is an ES
-            nodes.append(Node(entryNode[2:4], True, exitNode[2:4], True))
-            ESSet.add(exitNode)
-        elif switchIndicator in exitNode:   # exitNode a SW
-            nodes.append(Node(entryNode[2:4], True, exitNode[2:4], False))
-            SWSet.add(exitNode)
-    elif switchIndicator in entryNode:  # entryNode is an SW
-        SWSet.add(entryNode)
-        if endSystemIndicator in exitNode: # exitNode is an ES
-            nodes.append(Node(entryNode[2:4], False, exitNode[2:4], True))
-            ESSet.add(exitNode)
-        elif switchIndicator in exitNode:   # exitNode a SW
-            nodes.append(Node(entryNode[2:4], False, exitNode[2:4], False))
-            SWSet.add(exitNode)
-numberOfSW = len(SWSet)
-numberOfES = len(ESSet)
+connGraph = Graph()
+connList = []
+ESSet = set()
+SWSet = set()
+
+for e in range(len(entryList)):
+    n1 = ConnectionNode(entryList[e])
+    n2 = ConnectionNode(exitsList[e])
+    connGraph.add_edge(n1, n2, 1)
+    ESSet.add(n1) if n1.is_es else SWSet.add(n1)
+    ESSet.add(n2) if n2.is_es else SWSet.add(n2)
+    connList.append([n1, n2])
 
 entryIDs = ""
 exitIDs = ""
 isEntryES = ""
 isExitES = ""
 i = 0
-for n in nodes:
-    entryIDs += f"*.connDef[{i}].entryIndex = {n.nodeID}\n"
-    exitIDs += f"*.connDef[{i}].exitIndex = {n.connectedNodeID}\n"
-    isEntryES += "*.connDef[{}].isEntryAnEndsystem = {}\n".format(i, "true" if n.isES == True else "false")
-    isExitES += "*.connDef[{}].isExitAnEndsystem = {}\n".format(i, "true" if n.isConnectedNodeES == True else "false")
+for cit in connList:
+    entryIDs += f"*.connDef[{i}].entryIndex = {cit[0].id}\n"
+    exitIDs += f"*.connDef[{i}].exitIndex = {cit[1].id}\n"
+    isEntryES += "*.connDef[{}].isEntryAnEndsystem = {}\n".format(i, "true" if cit[0].is_es else "false")
+    isExitES += "*.connDef[{}].isExitAnEndsystem = {}\n".format(i, "true" if cit[1].is_es else "false")
     i += 1
 
 iniString3Conndef = entryIDs + "\n" + exitIDs + "\n" + isEntryES + "\n" + isExitES
 # ==========================================
 iniString4EthernetSettings = f"*.ethSpeed = {ethernetSpeed}\n*.cableLength = {ethernetCableLength}"
-iniString5ESGeneral_numberOfs = f"**.numberOfEndSystems = {numberOfES}\n" \
-                                f"**.numberOfSwitches = {numberOfSW}"
+iniString5ESGeneral_numberOfs = f"**.numberOfEndSystems = {len(ESSet)}\n" \
+                                f"**.numberOfSwitches = {len(SWSet)}"
 iniString6ESGeneral_TechDelays = f"**.scheduler.serviceTime = {switchSchServiceTime}\n" \
                                  f"**.switchFabric.delay.delay = {switchTechDelay}\n" \
                                  f"**.ESGroup[*].latencyTechTx.delay = {ESTxTechDelay}\n" \
@@ -196,12 +199,13 @@ for es in UniqEndSystemNameList:
 #
 # other details
 
+
 def fillEndSystemInfo(row, column_length):
     i = 0
     for colIndex in range(column_length):
         if colIndex == 0:  # col: End System
             esName = row[colIndex]
-            esInfo = EndSystem(esName[2:4])
+            esInfo = EndSystemInfo(esName[2:4])
         if colIndex == 1:  # col: Source ID
             esInfo.sourceID = row[colIndex]
         if colIndex == 2:  # col: Datarate of Source
@@ -314,3 +318,9 @@ for str in iniStringMessageSet:
 iniFile.close()
 
 # =========================================
+
+# ==========================================
+print(connList)
+shortest_path = find_path(connGraph, ConnectionNode("ES1"), ConnectionNode("ES5"))
+print(shortest_path)
+# ==========================================
