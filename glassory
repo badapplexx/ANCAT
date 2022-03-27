@@ -50,3 +50,56 @@ Sheet3_column11 = "Period"
 Sheet3_column12 = "Delta Period"
 Sheet3_column13 = "rho"
 Sheet3_column14 = "sigma"
+
+
+iniStringMessageSet = [""] * endOfFile
+for rowIndex in range(endOfFile):
+    esIndex = 0
+    sourceIndex = 0
+    row = sheet3.loc[rowIndex].values.tolist()
+    for colIndex in range(len(headerList)):
+        if colIndex == 0:  # col: End System
+            esName = row[colIndex]
+            esIndex = esName[2:4]
+        if colIndex == 1:  # col: Source ID
+            sourceIndex = row[colIndex]
+        if colIndex == 2:  # col: Datarate of Source
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].baudrate = {row[colIndex]} "
+        if colIndex == 3:  # col: Cable length
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].cableLength = {row[colIndex]} "
+        if colIndex == 4:  # col: VLID
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].virtualLinkId = {row[colIndex]}\n "
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].partitionId = {row[colIndex]} "
+        if colIndex == 5:  # col: startTime
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].startTime = {row[colIndex]} "
+        if colIndex == 6:  # col: stopTime
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].stopTime = {row[colIndex]} "
+        if colIndex == 7:  # col: BAG
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].BAG = {row[colIndex]} "
+        if colIndex == 8:  # col: Period
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].interArrivalTime = {row[colIndex]} "
+        if colIndex == 9:  # col: delta Period
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].deltaInterArrivalTimeMaxLimit = {row[colIndex]} "
+        if colIndex == 10:  # col: Payload Length
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].packetLength = {row[colIndex]} "
+        if colIndex == 11:  # col: Delta Payload Length
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].deltaPacketLengthMaxLimit = {row[colIndex]} "
+        if colIndex == 12:  # col: rho
+            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].rho = {row[colIndex]} "
+        if colIndex == 13:  # col: sigma
+            iniStringMessageSet[
+                rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].sigma = {row[colIndex]} "
+        iniStringMessageSet[rowIndex] += "\n"
+
+    print(ESInfoList[k].sourceID, ESInfoList[k].sourceDatarate, ESInfoList[k].sourceCableLength, ESInfoList[k].vlid, ESInfoList[k].startTime, ESInfoList[k].stopTime, ESInfoList[k].BAG,
+ESInfoList[k].period, ESInfoList[k].deltaPeriod, ESInfoList[k].payloadLength, ESInfoList[k].deltaPayloadLength, ESInfoList[k].rho, ESInfoList[k].sigma)
