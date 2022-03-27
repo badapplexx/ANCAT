@@ -14,8 +14,8 @@ sheet1_column2Name = "Exit"
 sheet2Name = "Settings"
 sheet2_column1Name = "Setting"
 sheet2_column2Name = "Value"
-sheet3Name = "End Systems"
-sheet3_column1Name = "End System"
+sheet3Name = "Message Set"
+sheet3_column1Name = "Source ES"
 
 iniFileName = "AutoNetwork.ini"
 #iniFileName = "C:\\Workspaces\\Github\\AFDX\\simulations\\AutoNetwork.ini"
@@ -56,12 +56,14 @@ class ConnectionNode:
         return hash(("ES" if self.is_es else "SW") + f"{self.id}")
 
 
-class EndSystemInfo():
-    def __init__(self, id):
-        self.sourceID = ""
-        self.sourceDatarate = ""
-        self.sourceCableLength = ""
+class MessageSet:
+    def __init__(self, sourceName, destinationName):
+        self.source = ConnectionNode(sourceName)  #ConnectionNode
+        destNameList = destinationName.split(",")
+        self.destinationList = [ConnectionNode(x) for x in destNameList]  #ConnectionNodes
+        self.trafficSourceID = -1
         self.vlid = ""
+        self.partitionID = ""
         self.startTime = ""
         self.stopTime = ""
         self.BAG = ""
@@ -71,10 +73,8 @@ class EndSystemInfo():
         self.deltaPayloadLength = ""
         self.rho = ""
         self.sigma = ""
-        self.nodeID = 0
-        self.isES = False
-        self.connectedNodeID = 0
-        self.isConnectedNodeES = False
+        self.sourceDatarate = ""
+        self.sourceCableLength = ""
 
 
 # get excel content
@@ -84,6 +84,8 @@ with pd.ExcelFile(inputFileName) as file:
     sheet3 = pd.read_excel(file, sheet3Name)
 
 # TOPOLOGY
+#print(sheet1.isnull())
+#eof = sheet1[sheet1.isnull().all(axis=1) == True].index.tolist()[0]  # get final line number
 entryList = sheet1[sheet1_column1Name].values.tolist()
 exitsList = sheet1[sheet1_column2Name].values.tolist()
 
@@ -115,10 +117,8 @@ def_frameHeaderLength = "47"
 endOfFile = sheet3[sheet3.isnull().all(axis=1) == True].index.tolist()[0]  # get final line number
 headerList = sheet3.columns.tolist()
 
-endSystemNamesList = (sheet3[sheet3_column1Name].values.tolist())[0:endOfFile]
+sourceNameColumn = (sheet3[sheet3_column1Name].values.tolist())[0:endOfFile]
 UniqEndSystemNameList = pd.unique((sheet3[sheet3_column1Name].values.tolist())[0:endOfFile])
-
-# a = len(pd.unique((sheet3[sheet3_column1Name].values.tolist())[0:endOfFile]))  # for messageCount values, count unique ES names
 
 ############################# PART2 #############################
 ##################### CREATE and FILL *.ini #####################
@@ -127,28 +127,13 @@ iniString1Header = "[General]\n" "**.vector-recording = true\n" "**.scalar-recor
 
 ### Network Parameters ###
 iniString2GenNetworkParams = "#Network Params\n"  f"network = {networkName}"
-
-# Connection definitions: ex. ES1<->SW1 ..
-connDefEntryTypeString = "*.connDef[{}].isEntryAnEndsystem = {}"
-connDefExitTypeString = "*.connDef[{}].isExitAnEndsystem = {}"
-connDefEntryIndexString = "*.connDef[{}].entryIndex = {}"
-connDefExitIndexString = "*.connDef[{}].exitIndex = {}"
-
-
-# initialize Parameters
-connDefEntryTypeStringList = []
-connDefExitTypeStringList = []
-connDefEntryIndexStringList = []
-connDefExitIndexStringList = []
 # ==========================================
-# add values(ESn, SWn) in the column to a set to count unique occurrences
-
 connGraph = Graph()
 connList = []
 ESSet = set()
 SWSet = set()
-
 for e in range(len(entryList)):
+    #print(entryList)
     n1 = ConnectionNode(entryList[e])
     n2 = ConnectionNode(exitsList[e])
     connGraph.add_edge(n1, n2, 1)
@@ -194,110 +179,59 @@ iniString9ESGeneral_defaults += f"**.skewMaxTester.skewMaxTestEnabled = {def_isS
 iniStringMessageCount = [" "] * len(UniqEndSystemNameList)
 for es in UniqEndSystemNameList:
     ix = int(es[2:4])
-    iniStringMessageCount[ix] = f"**.ESGroup[{ix}].messageCount = {endSystemNamesList.count(es)}\n"
+    iniStringMessageCount[ix] = f"**.ESGroup[{ix}].messageCount = {sourceNameColumn.count(es)}\n"
 # ==========================================
 #
 # other details
 
 
 def fillEndSystemInfo(row, column_length):
-    i = 0
-    for colIndex in range(column_length):
-        if colIndex == 0:  # col: End System
-            esName = row[colIndex]
-            esInfo = EndSystemInfo(esName[2:4])
-        if colIndex == 1:  # col: Source ID
-            esInfo.sourceID = row[colIndex]
-        if colIndex == 2:  # col: Datarate of Source
-            esInfo.sourceDatarate  = row[colIndex]
-        if colIndex == 3:  # col: Cable length
-            esInfo.sourceCableLength  = row[colIndex]
-        if colIndex == 4:  # col: VLID
-            esInfo.vlid = row[colIndex]
-        if colIndex == 5:  # col: startTime
-            esInfo.startTime = row[colIndex]
-        if colIndex == 6:  # col: stopTime
-            esInfo.stopTime = row[colIndex]
-        if colIndex == 7:  # col: BAG
-            esInfo.BAG = row[colIndex]
-        if colIndex == 8:  # col: Period
-            esInfo.period = row[colIndex]
-        if colIndex == 9:  # col: delta Period
-            esInfo.deltaPeriod = row[colIndex]
-        if colIndex == 10:  # col: Payload Length
-            esInfo.payloadLength = row[colIndex]
-        if colIndex == 11:  # col: Delta Payload Length
-            esInfo.deltaPayloadLength = row[colIndex]
-        if colIndex == 12:  # col: rho
-            esInfo.rho = row[colIndex]
-        if colIndex == 13:  # col: sigma
-            esInfo.sigma = row[colIndex]
-        i += i
+    esInfo = MessageSet(row[0], row[1])
+    esInfo.vlid = row[2]
+    esInfo.partitionID = row[3]
+    esInfo.startTime = row[4]
+    esInfo.stopTime = row[5]
+    esInfo.BAG = row[6]
+    esInfo.period = row[7]
+    esInfo.deltaPeriod = row[8]
+    esInfo.payloadLength = row[9]
+    esInfo.deltaPayloadLength = row[10]
+    esInfo.rho = row[11]
+    esInfo.sigma = row[12]
+    esInfo.sourceDatarate = row[13]
+    esInfo.sourceCableLength = row[14]
     return esInfo
-
 
 ESInfoList = []
 for rowIndex in range(endOfFile):
     row = sheet3.loc[rowIndex].values.tolist()
-    ESInfoList.append(fillEndSystemInfo(row, len(headerList)))
-
-datarateStr = ""
-cableLenStr = ""
-for e in ESInfoList:
-    datarateStr += f"**.ESGroup[{e.nodeID}].trafficSource[{e.sourceID}].baudrate = {e.sourceDatarate}\n"
-    cableLenStr += f"**.ESGroup[{e.nodeID}].trafficSource[{e.sourceID}].cableLength = {e.sourceCableLength}\n"
-
-print(datarateStr)
-print(cableLenStr)
+    temp = fillEndSystemInfo(row, len(headerList))
+    cnt = 0
+    for e in ESInfoList:
+        if e.source.id == temp.source.id:
+            cnt += 1
+    temp.trafficSourceID = cnt
+    ESInfoList.append(temp)
 
 iniStringMessageSet = [""] * endOfFile
-for rowIndex in range(endOfFile):
-    esIndex = 0
-    sourceIndex = 0
-    row = sheet3.loc[rowIndex].values.tolist()
-    for colIndex in range(len(headerList)):
-        if colIndex == 0:  # col: End System
-            esName = row[colIndex]
-            esIndex = esName[2:4]
-        if colIndex == 1:  # col: Source ID
-            sourceIndex = row[colIndex]
-        if colIndex == 2:  # col: Datarate of Source
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].baudrate = {row[colIndex]} "
-        if colIndex == 3:  # col: Cable length
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].cableLength = {row[colIndex]} "
-        if colIndex == 4:  # col: VLID
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].virtualLinkId = {row[colIndex]}\n "
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].partitionId = {row[colIndex]} "
-        if colIndex == 5:  # col: startTime
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].startTime = {row[colIndex]} "
-        if colIndex == 6:  # col: stopTime
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].stopTime = {row[colIndex]} "
-        if colIndex == 7:  # col: BAG
-            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].BAG = {row[colIndex]} "
-        if colIndex == 8:  # col: Period
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].interArrivalTime = {row[colIndex]} "
-        if colIndex == 9:  # col: delta Period
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].deltaInterArrivalTimeMaxLimit = {row[colIndex]} "
-        if colIndex == 10:  # col: Payload Length
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].trafficSource[{sourceIndex}].packetLength = {row[colIndex]} "
-        if colIndex == 11:  # col: Delta Payload Length
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].deltaPacketLengthMaxLimit = {row[colIndex]} "
-        if colIndex == 12:  # col: rho
-            iniStringMessageSet[rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].rho = {row[colIndex]} "
-        if colIndex == 13:  # col: sigma
-            iniStringMessageSet[
-                rowIndex] += f"**.ESGroup[{esIndex}].afdxMarshall[{sourceIndex}].sigma = {row[colIndex]} "
-        iniStringMessageSet[rowIndex] += "\n"
+for e in ESInfoList:
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].virtualLinkId = {e.vlid}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].partitionId = {e.partitionID}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].startTime = {e.startTime}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].stopTime = {e.stopTime}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].virtualLinkId = {e.BAG}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].interArrivalTime = {e.period}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].deltaInterArrivalTimeMaxLimit = {e.deltaPeriod}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].packetLength = {e.payloadLength}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].deltaPacketLengthMaxLimit = {e.deltaPayloadLength}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].rho = {e.rho}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].sigma = {e.sigma}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].baudrate = {e.sourceDatarate}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].cableLength = {e.sourceCableLength}\n "
+    iniStringMessageSet[rowIndex] += "\n"
+print(iniStringMessageSet)
+
+
 # ==========================================
 # Open file and append strings
 iniFile = open(iniFileName, 'w')
