@@ -137,6 +137,7 @@ for e in range(len(entryList)):
     n1 = ConnectionNode(entryList[e])
     n2 = ConnectionNode(exitsList[e])
     connGraph.add_edge(n1, n2, 1)
+    connGraph.add_edge(n2, n1, 1)
     ESSet.add(n1) if n1.is_es else SWSet.add(n1)
     ESSet.add(n2) if n2.is_es else SWSet.add(n2)
     connList.append([n1, n2])
@@ -229,7 +230,7 @@ for e in ESInfoList:
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].baudrate = {e.sourceDatarate}\n "
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].cableLength = {e.sourceCableLength}\n "
     iniStringMessageSet[rowIndex] += "\n"
-print(iniStringMessageSet)
+#print(iniStringMessageSet)
 
 
 # ==========================================
@@ -254,7 +255,29 @@ iniFile.close()
 # =========================================
 
 # ==========================================
-print(connList)
-shortest_path = find_path(connGraph, ConnectionNode("ES1"), ConnectionNode("ES5"))
-print(shortest_path)
+#print(connList)
+#shortest_path = find_path(connGraph, ConnectionNode("ES1"), ConnectionNode("ES5"))
+#print(shortest_path)
+# ==========================================
+
+
+# ==========================================
+for s in SWSet:
+    f = open(f"{s}.txt", "w")
+    for e in ESInfoList:
+        port_list = []
+        for d in e.destinationList:
+            p = find_path(connGraph, s, d)
+            first_node = p.nodes[1]
+            for c in connList:
+                if ((c[0] == s) and (c[1] == d)) or ((c[0] == d) and (c[1] == s)):
+                    port_list.append(connList.index(c))
+                    break
+
+        if(0 != len(port_list)):
+            print(s)
+            print(e.vlid)
+            print(port_list)
+            print(" ")
+
 # ==========================================
