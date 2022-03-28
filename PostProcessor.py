@@ -1,17 +1,10 @@
 import os
 import pandas as pd
-import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 from pylab import title, figure, xlabel, ylabel, xticks, bar, legend, axis, savefig
 from fpdf import FPDF
 from datetime import datetime
 import statistics
-from enum import Enum
-
-
-class RecordType(Enum):
-    NONE = 0
-    PER_VL = 1
-    PER_SWITCH = 2
 
 
 class Record:
@@ -19,14 +12,14 @@ class Record:
         self.index = -1
         self.block = ""
         self.name = ""
-        self.type = RecordType.NONE
-        self.id = -1
+        self.type = ""
+        self.no = -1
         self.count = 0
         self.time = []
         self.data = []
 
     def __str__(self):
-        return f"{self.index}: name='{self.name}#{self.id}', block='{self.block}', count='{len(self.data)}'"
+        return f"{self.index}: name='{self.name}{self.type}{self.no}', block='{self.block}', count='{len(self.data)}'"
 
     def addDataPoint(self, t, d):
         self.time.append(float(t))
@@ -56,25 +49,23 @@ def getData(dir):
             lines_vci = file_vci.readlines()
             vector_lines = [x for x in lines_vci if "vector" in x]
             vector_lines_splitted = list(map(str.split, vector_lines))
-            dataCount = len(vector_lines)
+            dataCount = len(vector_lines_splitted)
             data_lines = lines_vci[-dataCount - 1:]
             data_lines_splitted = list(map(str.split, data_lines))
             records = [Record() for i in range(dataCount)]
+
             for i in range(dataCount):
-                records[i].index = i
+                records[i].index = int(vector_lines_splitted[i][1])
                 records[i].block = vector_lines_splitted[i][2]
                 records[i].count = data_lines_splitted[i][7]
                 name_splitted = vector_lines_splitted[i][3].split("_")
                 records[i].name = name_splitted[0]
-                if("VL" in name_splitted[1]):
-                    records[i].type = RecordType.PER_VL
-                    records[i].id = int(name_splitted[1][2:])
-                elif("SW" in name_splitted[1]):
-                    records[i].type = RecordType.PER_SWITCH
-                    records[i].id = int(name_splitted[1][2:])
-                else:
-                    records[i].type = RecordType.NONE
-                    records[i].id = int(name_splitted[1])
+                for c in name_splitted[1]:
+                    if c.isdigit():
+                        ind = name_splitted[1].index(c)
+                        records[i].type = name_splitted[1][:ind]
+                        records[i].no = int(name_splitted[1][ind:])
+                        break
 
     # vec file operations
     for file in os.listdir(dir):
@@ -100,10 +91,102 @@ def printMultiRecord(r):
 
 
 def saveFigures(records):
+
+    time_range_small = 0.02
+    time_range_medium = 0.1
+
+    for rec in records:
+        # 2D line plot
+        plt.figure(figsize=(10, 10))
+        plt.suptitle(f"{rec.name} for {rec.type}{rec.no}" + " in " + records[0].block)
+
+        plt.subplot(3,1,1)
+        plt.grid(True)
+        plt.xlabel("time")
+        xdat = [xd for xd in rec.time if xd < time_range_small]
+        ydat = rec.data[:len(xdat)]
+        plt.plot(xdat, ydat,
+                 color="black",
+                 linestyle="solid",
+                 linewidth=0.5,
+                 marker=".",
+                 markersize=5)
+
+        plt.subplot(3,1,2)
+        plt.grid(True)
+        plt.xlabel("time")
+        xdat = [xd for xd in rec.time if xd < time_range_medium]
+        ydat = rec.data[:len(xdat)]
+        plt.plot(xdat, ydat,
+                 color="black",
+                 linestyle="solid",
+                 linewidth=0.5,
+                 marker=".",
+                 markersize=2)
+
+        plt.subplot(3,1,3)
+        plt.grid(True)
+        plt.xlabel("time")
+        plt.plot(rec.time, rec.data,
+                 color="black",
+                 linestyle="solid",
+                 linewidth=0.5)
+        plt.savefig(f"{rec.name}{rec.type}{rec.no}")
+        plt.close()
+        print(f"Printing all figures: {int(100*(records.index(rec)+1)/len(records))}%")
+
+    rec_names = set()
+    for x in records:
+        rec_names.add(x.name)
+
+    for r in rec_names:
+        plt.figure(figsize=(10, 10))
+        plt.suptitle(f"{r}")
+
+        plt.grid(True)
+        plt.xlabel("time")
+        for x in records:
+            if r == x.name:
+                plt.subplot(3,1,1)
+                plt.grid(True)
+                plt.xlabel("time")
+                xdat = [xd for xd in x.time if xd < time_range_small]
+                ydat = x.data[:len(xdat)]
+                plt.plot(xdat, ydat,
+                         linestyle="solid",
+                         linewidth=0.5,
+                         marker=".",
+                         markersize=2,
+                         label=f"{x.type}{x.no}")
+                plt.subplot(3,1,2)
+                plt.grid(True)
+                plt.xlabel("time")
+                xdat = [xd for xd in x.time if xd < time_range_medium]
+                ydat = x.data[:len(xdat)]
+                plt.plot(xdat, ydat,
+                         linestyle="solid",
+                         linewidth=0.5,
+                         marker=".",
+                         markersize=2,
+                         label=f"{x.type}{x.no}")
+                plt.subplot(3,1,3)
+                plt.grid(True)
+                plt.xlabel("time")
+                plt.plot(x.time, x.data,
+                         linestyle="solid",
+                         linewidth=0.5,
+                         marker=".",
+                         markersize=2,
+                         label=f"{x.type}{x.no}")
+        plt.legend()
+        plt.savefig(f"{r}_all")
+        plt.close()
+        print(f"Printing combined figures: {int(100*(rec_names.index(r)+1)/len(rec_names))}%")
+
     # 2D line plot
-    plot.xlabel("time")
-    plot.ylabel("data")
-    plot.plot(records[0].time, records[0].data,
+    plt.xlabel("time")
+    plt.ylabel("data")
+    plt.plot(records[0].time, records[0].data,
               color="black",
               linestyle="dashed",
               linewidth=1,
@@ -112,25 +195,25 @@ def saveFigures(records):
               markersize=1,
               label="mylabel")
 
-    plot.title(records[0].name + " in " + records[0].block)
-    plot.savefig('plot_2d.png')
+    plt.title(records[0].name + " in " + records[0].block)
+    #plt.savefig('plot_2d.png')
 
     # histogram plot
     rng = (0, 5)
     bins = 1
-    plot.hist(records[1].data, bins, rng,
+    plt.hist(records[1].data, bins, rng,
               histtype="bar",
               rwidth=0.8)
-    plot.savefig('plot_histogram.png')
+    #plt.savefig('plot_histogram.png')
 
     # scatter plot
     rng = (0, 5)
     bins = 1
-    plot.scatter(records[2].time,
+    plt.scatter(records[2].time,
                  records[2].data,
                  marker=".",
                  s=30)
-    plot.savefig('plot_scatter.png')
+    #plt.savefig('plot_scatter.png')
 
 
 class Report(FPDF):
@@ -207,7 +290,7 @@ def saveReport(records):
 
 
 if __name__ == "__main__":
-    records = getData(".")
-    printMultiRecord(records)
-    # saveFigures(records)
+    records = getData("C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this\\Experiment2")
+    # printMultiRecord(records)
+    saveFigures(records)
     # saveReport(records)
