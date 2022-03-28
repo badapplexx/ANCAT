@@ -18,7 +18,7 @@ sheet3Name = "Message Set"
 sheet3_column1Name = "Source ES"
 
 iniFileName = "AutoNetwork.ini"
-#iniFileName = "C:\\Workspaces\\Github\\AFDX\\simulations\\AutoNetwork.ini"
+ouputDirectory = "" #"C:\\Workspaces\\Github\\AFDX\\simulations\\"
 endSystemIndicator = "ES"
 switchIndicator = "SW"
 networkName = "Deneme"
@@ -84,7 +84,6 @@ with pd.ExcelFile(inputFileName) as file:
     sheet3 = pd.read_excel(file, sheet3Name)
 
 # TOPOLOGY
-#print(sheet1.isnull())
 #eof = sheet1[sheet1.isnull().all(axis=1) == True].index.tolist()[0]  # get final line number
 entryList = sheet1[sheet1_column1Name].values.tolist()
 exitsList = sheet1[sheet1_column2Name].values.tolist()
@@ -133,7 +132,6 @@ connList = []
 ESSet = set()
 SWSet = set()
 for e in range(len(entryList)):
-    #print(entryList)
     n1 = ConnectionNode(entryList[e])
     n2 = ConnectionNode(exitsList[e])
     connGraph.add_edge(n1, n2, 1)
@@ -216,6 +214,7 @@ for rowIndex in range(endOfFile):
 
 iniStringMessageSet = [""] * endOfFile
 for e in ESInfoList:
+    rowIndex = ESInfoList.index(e)
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].virtualLinkId = {e.vlid}\n "
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].partitionId = {e.partitionID}\n "
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].startTime = {e.startTime}\n "
@@ -235,7 +234,7 @@ for e in ESInfoList:
 
 # ==========================================
 # Open file and append strings
-iniFile = open(iniFileName, 'w')
+iniFile = open(ouputDirectory+iniFileName, 'w')
 iniFile.write(iniString1Header + "\n\n")
 iniFile.write(iniString2GenNetworkParams + "\n\n")
 iniFile.write(iniString3Conndef + "\n\n")
@@ -245,39 +244,27 @@ iniFile.write(iniString7ESGeneral_skewMax + "\n")
 iniFile.write(iniString8ESGeneralVLQueueLength + "\n")
 iniFile.write(iniString6ESGeneral_TechDelays + "\n")
 iniFile.write(iniString9ESGeneral_defaults + "\n\n")
-for str in iniStringMessageCount:
-    iniFile.write(str)
-for str in iniStringMessageSet:
-    iniFile.write(str)
+for s in iniStringMessageCount:
+    iniFile.write(s)
+for s in iniStringMessageSet:
+    iniFile.write(s)
 # Close the file
 iniFile.close()
 
-# =========================================
-
-# ==========================================
-#print(connList)
-#shortest_path = find_path(connGraph, ConnectionNode("ES1"), ConnectionNode("ES5"))
-#print(shortest_path)
-# ==========================================
-
-
-# ==========================================
+############################# PART3 #############################
+################# CREATE and FILL config tables #################
 for s in SWSet:
-    f = open(f"{s}.txt", "w")
+    f = open(ouputDirectory + f"{s}.txt", "w")
+    f.write(f"*** VL ID - Ports Mapping for Switch {s.id} ***\n")
     for e in ESInfoList:
-        port_list = []
+        ports = set()
         for d in e.destinationList:
             p = find_path(connGraph, s, d)
             first_node = p.nodes[1]
             for c in connList:
-                if ((c[0] == s) and (c[1] == d)) or ((c[0] == d) and (c[1] == s)):
-                    port_list.append(connList.index(c))
+                if ((c[0] == s) and (c[1] == first_node)) or ((c[0] == first_node) and (c[1] == s)):
+                    ports.add(connList.index(c))
                     break
+        f.write(f"{e.vlid} : {ports}\n")
+    f.close()
 
-        if(0 != len(port_list)):
-            print(s)
-            print(e.vlid)
-            print(port_list)
-            print(" ")
-
-# ==========================================
