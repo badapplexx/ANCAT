@@ -260,57 +260,64 @@ def saveReport(records):
     # general statistics section ##############################################
     print(f"Creating pdf report - General Statistics")
     report.add_heading_lvl1("1. General Statistics")
-    report.add_heading_lvl2("1.1. End-to-end latency")
 
     for r in records:
         if "E2ELatency" in r.name:
             rall = Record()
             rall.data += r.data
             rall.count += int(r.count)
+    report.add_page()
+    report.add_line(f"    Combined_E2ELatency")
     report.insertRecord(rall, "Combined_E2ELatency.png")
     print(f"    Combined_E2ELatency.png is inserted")
     for r in records:
         if "ESBagLatency" in r.name:
-            report.add_page()
             rall = Record()
             rall.data += r.data
             rall.count += int(r.count)
+    report.add_page()
+    report.add_line(f"    Combined_ESBagLatency")
     report.insertRecord(rall, "Combined_ESBagLatency.png")
     print(f"    Combined_ESBagLatency.png is inserted")
     for r in records:
         if "ESSchedulingLatency" in r.name:
-            report.add_page()
             rall = Record()
             rall.data += r.data
             rall.count += int(r.count)
+    report.add_page()
+    report.add_line(f"    Combined_ESSchedulingLatency")
     report.insertRecord(rall, "Combined_ESSchedulingLatency.png")
     print(f"    Combined_ESSchedulingLatency.png is inserted")
     for r in records:
         if "ESTotalLatency" in r.name:
-            report.add_page()
             rall = Record()
             rall.data += r.data
             rall.count += int(r.count)
+    report.add_page()
+    report.add_line(f"    Combined_ESTotalLatency")
     report.insertRecord(rall, "Combined_ESTotalLatency.png")
     print(f"    Combined_ESTotalLatency.png is inserted")
     for r in records:
         if "SWQueueingTime" in r.name:
-            report.add_page()
             rall = Record()
             rall.data += r.data
             rall.count += int(r.count)
+    report.add_page()
+    report.add_line(f"    Combined_SWQueueingTime")
     report.insertRecord(rall, "Combined_SWQueueingTime.png")
     print(f"    Combined_SWQueueingTime.png is inserted")
     for r in records:
         if "SWQueueLength" in r.name:
-            report.add_page()
             rall = Record()
             rall.data += r.data
             rall.count += int(r.count)
+    report.add_page()
+    report.add_line(f"    Combined_SWQueueLength")
     report.insertRecord(rall, "Combined_SWQueueLength.png")
     print(f"    Combined_SWQueueLength.png is inserted")
 
     # per Switch statistics section(s) ########################################
+    print(f"Creating pdf report - PerSwitch Statistics")
     report.add_page()
     report.add_heading_lvl1("2. Per-Switch Statistics")
     for r in records:
@@ -333,6 +340,7 @@ def saveReport(records):
 
     for vno in VL_set:
         i = VL_set.index(vno)
+        report.add_page()
         report.add_heading_lvl2(f"3.{i+1}. VL{vno} Statistics")
         for r in records:
             if "E2ELatency" in r.name and "VL" == r.type and vno == r.no:
