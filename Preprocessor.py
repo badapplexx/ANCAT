@@ -1,13 +1,69 @@
 import pandas as pd
 from dijkstar import Graph, find_path
 
+import argparse
+import os
+import sys
+import glob
+
+# CONSTANTS AND SETTINGS
+
+myParser = argparse.ArgumentParser(description='Creates *.ini files and config tables for the AFDX Simulation. Please specify the input excel file. '
+                                                'Otherwise current directory will be searched for and first one found will be used.')
+
+# Add the arguments
+myParser.add_argument('-iFile',
+                      metavar="<input path>",
+                      type=str,
+                      help='location of the input *.xlsx file',
+                      required=False)
+myParser.add_argument('-oPath',
+                      metavar="<Output path>",
+                      type=str,
+                      help='path that *.ini file and config table(s) are needed to be located.',
+                      required=False)
+# Execute the parse_args() method
+args = myParser.parse_args()
+i = args.iFile
+o = args.oPath
+
+if i is None:
+    fileList = glob.glob("*.xlsx")
+    if 0 != len(fileList):
+        inputDirectory = fileList[0]
+        print(f">>  No *.xlsx file(-i) specified. Using \"{inputDirectory}\" located in current directory")
+    else:
+        print("<<No *.xlsx files in current directory, by!")
+        sys.exit()
+else:
+    if not os.path.isfile(i):
+        print(f'<<No such file as \"{i}\", by!')
+        sys.exit()
+    else:
+        inputDirectory = i
+        print(f">> input file: {inputDirectory}")
+if o is None:
+    print(">>  No output directory specified. Using current directory.")
+    simulationDirectory = ""
+else:
+    if not os.path.isdir(o):
+        print(f'<<No such directory as \"{o}\", by!')
+        sys.exit()
+    else:
+        simulationDirectory = o
+
+    if '\\' != simulationDirectory[len(simulationDirectory)-1]:
+        simulationDirectory += "\\"
+    print(f">> output directory: {simulationDirectory} \n")
+
+
 ############################# PART1 #############################
 ########################## READ EXCEL ###########################
 #################################################################
 # Get: numberOfES, numberOfSW, entryList, exitsList values
 
 # CONSTANTS AND SETTINGS
-inputFileName = "Config2.xlsx"
+iniFileName = "AutoNetwork.ini"
 sheet1Name = "Topology"
 sheet1_column1Name = "End1"
 sheet1_column2Name = "End2"
@@ -17,11 +73,9 @@ sheet2_column2Name = "Value"
 sheet3Name = "Message Set"
 sheet3_column1Name = "Source ES"
 
-iniFileName = "AutoNetwork.ini"
-ouputDirectory = "C:\\Workspaces\\Github\\AFDX\\simulations\\"
 endSystemIndicator = "ES"
 switchIndicator = "SW"
-networkName = "Deneme"
+networkName = "AutoNetwork"
 
 # SOME DECLARATIONS
 iniString1Header = ""
@@ -78,7 +132,7 @@ class MessageSet:
 
 
 # get excel content
-with pd.ExcelFile(inputFileName) as file:
+with pd.ExcelFile(inputDirectory) as file:
     sheet1 = pd.read_excel(file, sheet1Name)
     sheet2 = pd.read_excel(file, sheet2Name)
     sheet3 = pd.read_excel(file, sheet3Name)
@@ -234,7 +288,7 @@ for e in ESInfoList:
 
 # ==========================================
 # Open file and append strings
-iniFile = open(ouputDirectory+iniFileName, 'w')
+iniFile = open(simulationDirectory + iniFileName, 'w')
 iniFile.write(iniString1Header + "\n\n")
 iniFile.write(iniString2GenNetworkParams + "\n\n")
 iniFile.write(iniString3Conndef + "\n\n")
@@ -253,9 +307,10 @@ iniFile.close()
 ############################# PART3 #############################
 ################# CREATE and FILL config tables #################
 iniStringConfigTable = ""
+
 for s in SWSet:
     fileName = f"{s}.txt"
-    f = open(ouputDirectory + fileName, "w")
+    f = open(simulationDirectory + fileName, "w")
     f.write(f"*** VL ID - Ports Mapping for Switch {s.id} ***\n")
     for e in ESInfoList:
         ports = set()
@@ -268,10 +323,11 @@ for s in SWSet:
                     break
         f.write(f"{e.vlid} : {ports}\n")
     f.close()
+    print(">>" + simulationDirectory + fileName + " is created")
     iniStringConfigTable += f"*.SwitchA[{s.id}].switchFabric.router.configTableName = \"{fileName}\"\n"
     iniStringConfigTable += f"*.SwitchB[{s.id}].switchFabric.router.configTableName = \"{fileName}\"\n"
 
-iniFile = open(ouputDirectory+iniFileName, 'a')
+iniFile = open(simulationDirectory + iniFileName, 'a')
 iniFile.write("\n" + iniStringConfigTable)
 iniFile.close()
-
+print(">>" + simulationDirectory + iniFileName + " is created.\n")
