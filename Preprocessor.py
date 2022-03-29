@@ -78,8 +78,8 @@ switchIndicator = "SW"
 networkName = "AutoNetwork"
 
 # SOME DECLARATIONS
-iniString1Header = ""
-iniString2GenNetworkParams = ""
+# iniString1Header = ""
+# iniString2GenNetworkParams = ""
 iniString3Conndef = ""
 iniString4EthernetSettings = ""
 iniString5ESGeneral_numberOfs = ""
@@ -111,10 +111,10 @@ class ConnectionNode:
 
 
 class MessageSet:
-    def __init__(self, sourceName, destinationName):
-        self.source = ConnectionNode(sourceName)  #ConnectionNode
-        destNameList = destinationName.split(",")
-        self.destinationList = [ConnectionNode(x) for x in destNameList]  #ConnectionNodes
+    def __init__(self, source_name, destination_name):
+        self.source = ConnectionNode(source_name)
+        destNameList = destination_name.split(",")
+        self.destinationList = [ConnectionNode(x) for x in destNameList]
         self.trafficSourceID = -1
         self.vlid = ""
         self.partitionID = ""
@@ -138,7 +138,6 @@ with pd.ExcelFile(inputDirectory) as file:
     sheet3 = pd.read_excel(file, sheet3Name)
 
 # TOPOLOGY
-#eof = sheet1[sheet1.isnull().all(axis=1) == True].index.tolist()[0]  # get final line number
 entryList = sheet1[sheet1_column1Name].values.tolist()
 exitsList = sheet1[sheet1_column2Name].values.tolist()
 
