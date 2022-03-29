@@ -294,13 +294,13 @@ def saveReport(records):
     report.insertRecord(rall, "Combined_ESTotalLatency.png")
     print(f"    Combined_ESTotalLatency.png is inserted")
     for r in records:
-        if "SWQueuingTime" in r.name:
+        if "SWQueueingTime" in r.name:
             report.add_page()
             rall = Record()
             rall.data += r.data
             rall.count += int(r.count)
-    report.insertRecord(rall, "Combined_SWQueuingTime.png")
-    print(f"    Combined_SWQueuingTime.png is inserted")
+    report.insertRecord(rall, "Combined_SWQueueingTime.png")
+    print(f"    Combined_SWQueueingTime.png is inserted")
     for r in records:
         if "SWQueueLength" in r.name:
             report.add_page()
