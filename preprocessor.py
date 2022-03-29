@@ -7,10 +7,10 @@ from dijkstar import Graph, find_path
 # Get: numberOfES, numberOfSW, entryList, exitsList values
 
 # CONSTANTS AND SETTINGS
-inputFileName = "Config.xlsx"
+inputFileName = "Config2.xlsx"
 sheet1Name = "Topology"
-sheet1_column1Name = "Entry"
-sheet1_column2Name = "Exit"
+sheet1_column1Name = "End1"
+sheet1_column2Name = "End2"
 sheet2Name = "Settings"
 sheet2_column1Name = "Setting"
 sheet2_column2Name = "Value"
@@ -18,7 +18,7 @@ sheet3Name = "Message Set"
 sheet3_column1Name = "Source ES"
 
 iniFileName = "AutoNetwork.ini"
-ouputDirectory = "" #"C:\\Workspaces\\Github\\AFDX\\simulations\\"
+ouputDirectory = "C:\\Workspaces\\Github\\AFDX\\simulations\\"
 endSystemIndicator = "ES"
 switchIndicator = "SW"
 networkName = "Deneme"
@@ -113,6 +113,7 @@ def_udpDestPort = "0x5678"
 def_frameHeaderLength = "47"
 
 # MESSAGE SETS
+
 endOfFile = sheet3[sheet3.isnull().all(axis=1) == True].index.tolist()[0]  # get final line number
 headerList = sheet3.columns.tolist()
 
@@ -186,19 +187,19 @@ for es in UniqEndSystemNameList:
 
 def fillEndSystemInfo(row, column_length):
     esInfo = MessageSet(row[0], row[1])
-    esInfo.vlid = row[2]
-    esInfo.partitionID = row[3]
-    esInfo.startTime = row[4]
-    esInfo.stopTime = row[5]
-    esInfo.BAG = row[6]
-    esInfo.period = row[7]
-    esInfo.deltaPeriod = row[8]
-    esInfo.payloadLength = row[9]
-    esInfo.deltaPayloadLength = row[10]
-    esInfo.rho = row[11]
-    esInfo.sigma = row[12]
-    esInfo.sourceDatarate = row[13]
-    esInfo.sourceCableLength = row[14]
+    esInfo.vlid = str(row[2])
+    esInfo.partitionID = int(row[3])
+    esInfo.startTime = str(row[4])
+    esInfo.stopTime = str(row[5])
+    esInfo.BAG = str(row[6])
+    esInfo.period = str(row[7])
+    esInfo.deltaPeriod = int(row[8])
+    esInfo.payloadLength = int(row[9])
+    esInfo.deltaPayloadLength = int(row[10])
+    esInfo.rho = str(row[11])
+    esInfo.sigma = int(row[12])
+    esInfo.sourceDatarate = str(row[13])
+    esInfo.sourceCableLength = str(row[14])
     return esInfo
 
 ESInfoList = []
@@ -215,22 +216,21 @@ for rowIndex in range(endOfFile):
 iniStringMessageSet = [""] * endOfFile
 for e in ESInfoList:
     rowIndex = ESInfoList.index(e)
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].virtualLinkId = {e.vlid}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].partitionId = {e.partitionID}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].startTime = {e.startTime}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].stopTime = {e.stopTime}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].virtualLinkId = {e.BAG}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].interArrivalTime = {e.period}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].deltaInterArrivalTimeMaxLimit = {e.deltaPeriod}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].packetLength = {e.payloadLength}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].deltaPacketLengthMaxLimit = {e.deltaPayloadLength}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].rho = {e.rho}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].sigma = {e.sigma}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].baudrate = {e.sourceDatarate}\n "
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].cableLength = {e.sourceCableLength}\n "
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].rho = {e.rho}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].sigma = {e.sigma}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].BAG = {e.BAG}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].virtualLinkId = {e.vlid}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].deltaPacketLengthMaxLimit = {e.deltaPayloadLength}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].partitionId = {e.partitionID}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].startTime = {e.startTime}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].stopTime = {e.stopTime}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].interArrivalTime = {e.period}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].deltaInterArrivalTimeMaxLimit = {e.deltaPeriod}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].packetLength = {e.payloadLength}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].baudrate = {e.sourceDatarate}\n"
+    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].trafficSource[{e.trafficSourceID}].cableLength = {e.sourceCableLength}\n"
     iniStringMessageSet[rowIndex] += "\n"
 #print(iniStringMessageSet)
-
 
 # ==========================================
 # Open file and append strings
@@ -250,11 +250,12 @@ for s in iniStringMessageSet:
     iniFile.write(s)
 # Close the file
 iniFile.close()
-
 ############################# PART3 #############################
 ################# CREATE and FILL config tables #################
+iniStringConfigTable = ""
 for s in SWSet:
-    f = open(ouputDirectory + f"{s}.txt", "w")
+    fileName = f"{s}.txt"
+    f = open(ouputDirectory + fileName, "w")
     f.write(f"*** VL ID - Ports Mapping for Switch {s.id} ***\n")
     for e in ESInfoList:
         ports = set()
@@ -267,4 +268,10 @@ for s in SWSet:
                     break
         f.write(f"{e.vlid} : {ports}\n")
     f.close()
+    iniStringConfigTable += f"*.SwitchA[{s.id}].switchFabric.router.configTableName = \"{fileName}\"\n"
+    iniStringConfigTable += f"*.SwitchB[{s.id}].switchFabric.router.configTableName = \"{fileName}\"\n"
+
+iniFile = open(ouputDirectory+iniFileName, 'a')
+iniFile.write("\n" + iniStringConfigTable)
+iniFile.close()
 
