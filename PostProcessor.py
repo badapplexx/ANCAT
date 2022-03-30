@@ -20,7 +20,6 @@ class Record:
         self.count = 0
         self.time = []
         self.data = []
-        self.confidence = 0
 
     def __str__(self):
         return f"{self.index}: name='{self.name}{self.type}{self.no}', block='{self.block}', count='{len(self.data)}'"
@@ -110,10 +109,11 @@ def saveFigures(records):
     time_range_small = 0.02
     time_range_medium = 0.1
 
+    # Individual figures ######################################################
     for rec in records:
         # 2D line plot
-        plt.figure(figsize=(10, 10))
-        plt.suptitle(f"{rec.name} for {rec.type}{rec.no}" + " in " + records[0].block)
+        plt.figure(figsize=(2, 2))
+        plt.suptitle(f"{rec.name} for {rec.type}{rec.no}" + " in " + rec.block)
 
         plt.subplot(3,1,1)
         plt.grid(True)
@@ -152,12 +152,13 @@ def saveFigures(records):
         plt.close()
         print(f"Printing individual figures: {int(100*(records.index(rec)+1)/len(records))}%")
 
+    # Combined figures ########################################################
     rn = set()
     for x in records:
         rn.add(x.name)
     rec_names = list(rn)
     for r in rec_names:
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(2, 2))
         plt.suptitle(f"{r}")
 
         plt.grid(True)
@@ -249,10 +250,16 @@ class Report(FPDF):
         self.add_line_v2(f"    Minimum            : ", r.getMin())
         self.add_line_v2(f"    Mean               : ", r.getMean())
         if 0 != r.getMean():
-            self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% of true mean with 95% confidence")
-            self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% of true mean with 99% confidence")
+            self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
+            self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
         self.image(s, x=None, y=None, w=200, h=0, type="", link="")
 
+    def insertTextRecord(self, r, s):
+        self.add_line(f"{s}:")
+        self.add_line_v2(f"    Maximum            : ", r.getMax())
+        self.add_line_v2(f"    Mean               : ", r.getMean())
+        if 0 != r.getMean():
+            self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
 
 def saveReport(records):
     report = Report()
@@ -260,6 +267,43 @@ def saveReport(records):
     # general statistics section ##############################################
     print(f"Creating pdf report - General Statistics")
     report.add_heading_lvl1("1. General Statistics")
+    report.add_heading_lvl2("1.1. Summary")
+    for r in records:
+        if "E2ELatency" in r.name:
+            rall = Record()
+            rall.data += r.data
+            rall.count += int(r.count)
+    report.insertTextRecord(rall, "Overall E2ELatency")
+    for r in records:
+        if "ESBagLatency" in r.name:
+            rall = Record()
+            rall.data += r.data
+            rall.count += int(r.count)
+    report.insertTextRecord(rall, "Overall ESBagLatency")
+    for r in records:
+        if "ESSchedulingLatency" in r.name:
+            rall = Record()
+            rall.data += r.data
+            rall.count += int(r.count)
+    report.insertTextRecord(rall, "Overall ESSchedulingLatency")
+    for r in records:
+        if "ESTotalLatency" in r.name:
+            rall = Record()
+            rall.data += r.data
+            rall.count += int(r.count)
+    report.insertTextRecord(rall, "Overall ESTotalLatency")
+    for r in records:
+        if "SWQueueingTime" in r.name:
+            rall = Record()
+            rall.data += r.data
+            rall.count += int(r.count)
+    report.insertTextRecord(rall, "Overall SWQueueingTime")
+    for r in records:
+        if "SWQueueLength" in r.name:
+            rall = Record()
+            rall.data += r.data
+            rall.count += int(r.count)
+    report.insertTextRecord(rall, "Overall SWQueueLength")
 
     for r in records:
         if "E2ELatency" in r.name:
@@ -324,7 +368,7 @@ def saveReport(records):
         if "SWQueueLength" in r.name:
             if(0 != records.index(r)):
                 report.add_page()
-            report.insertRecord(rall, f"{r.type}{r.no}_SWQueueLength.png")
+            report.insertRecord(r, f"{r.type}{r.no}_SWQueueLength.png")
             print(f"    {r.type}{r.no} is inserted")
 
     # per VL statistics section(s) ############################################
@@ -382,7 +426,8 @@ def clean():
 
 
 if __name__ == "__main__":
-    records = getData("C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this\\Experiment2")
+    # records = getData("C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this\\Experiment2")
+    records = getData("C:\\Workspaces\\Github\\AFDX\\simulations\\results")
     #printMultiRecord(records)
     saveFigures(records)
     saveReport(records)
