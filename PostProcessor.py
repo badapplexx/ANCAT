@@ -6,6 +6,7 @@ from fpdf import FPDF
 from datetime import datetime
 import statistics
 import math
+import gc
 
 tg_95 = 1.96
 tg_99 = 2.58
@@ -112,7 +113,7 @@ def saveFigures(records):
     # Individual figures ######################################################
     for rec in records:
         # 2D line plot
-        plt.figure(figsize=(2, 2))
+        plt.figure(figsize=(10, 10))
         plt.suptitle(f"{rec.name} for {rec.type}{rec.no}" + " in " + rec.block)
 
         plt.subplot(3,1,1)
@@ -150,7 +151,9 @@ def saveFigures(records):
                  markersize=2)
         plt.savefig(f"{rec.type}{rec.no}_{rec.name}")
         plt.close()
+        plt.clf()
         print(f"Printing individual figures: {int(100*(records.index(rec)+1)/len(records))}%")
+        gc.collect()
 
     # Combined figures ########################################################
     rn = set()
@@ -158,7 +161,7 @@ def saveFigures(records):
         rn.add(x.name)
     rec_names = list(rn)
     for r in rec_names:
-        plt.figure(figsize=(2, 2))
+        plt.figure(figsize=(10, 10))
         plt.suptitle(f"{r}")
 
         plt.grid(True)
@@ -199,7 +202,9 @@ def saveFigures(records):
         plt.legend()
         plt.savefig(f"Combined_{r}")
         plt.close()
+        plt.clf()
         print(f"Printing combined figures: {int(100*(rec_names.index(r)+1)/len(rec_names))}%")
+        gc.collect()
 
 
 class Report(FPDF):
@@ -253,6 +258,7 @@ class Report(FPDF):
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
             self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
         self.image(s, x=None, y=None, w=200, h=0, type="", link="")
+        gc.collect()
 
     def insertTextRecord(self, r, s):
         self.add_line(f"{s}:")
@@ -260,6 +266,7 @@ class Report(FPDF):
         self.add_line_v2(f"    Mean               : ", r.getMean())
         if 0 != r.getMean():
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
+        gc.collect()
 
 def saveReport(records):
     report = Report()
@@ -366,7 +373,7 @@ def saveReport(records):
     report.add_heading_lvl1("2. Per-Switch Statistics")
     for r in records:
         if "SWQueueLength" in r.name:
-            if(0 != records.index(r)):
+            if 0 != records.index(r):
                 report.add_page()
             report.insertRecord(r, f"{r.type}{r.no}_SWQueueLength.png")
             print(f"    {r.type}{r.no} is inserted")
@@ -426,8 +433,8 @@ def clean():
 
 
 if __name__ == "__main__":
-    # records = getData("C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this\\Experiment2")
-    records = getData("C:\\Workspaces\\Github\\AFDX\\simulations\\results")
+    records = getData("C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this")
+    #records = getData("C:\\Workspaces\\Github\\AFDX\\simulations\\results")
     #printMultiRecord(records)
     saveFigures(records)
     saveReport(records)
