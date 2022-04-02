@@ -11,6 +11,7 @@ import gc
 tg_95 = 1.96
 tg_99 = 2.58
 
+
 class Record:
     def __init__(self):
         self.index = -1
@@ -23,7 +24,7 @@ class Record:
         self.data = []
 
     def __str__(self):
-        return f"{self.index}: name='{self.name}{self.type}{self.no}', block='{self.block}', count='{len(self.data)}'"
+        return f"{self.index}: name={self.name} {self.type}{self.no}, count={len(self.data)}, block={self.block}"
 
     def addDataPoint(self, t, d):
         self.time.append(float(t))
@@ -52,6 +53,7 @@ class Record:
 
     def getConfidence99(self):
         return 100*(self.getStdDev()*tg_99) / (self.getMean()*math.sqrt(self.count))
+
 
 def getData(dir):
     print(f"Reading directory contents {dir}")
@@ -111,16 +113,16 @@ def saveFigures(records):
     time_range_medium = 0.1
 
     # Individual figures ######################################################
-    for rec in records:
+    for r in records:
         # 2D line plot
         plt.figure(figsize=(10, 10))
-        plt.suptitle(f"{rec.name} for {rec.type}{rec.no}" + " in " + rec.block)
+        plt.suptitle(f"{r.name} for {r.type}{r.no}" + " in " + r.block)
 
         plt.subplot(3,1,1)
         plt.grid(True)
         plt.xlabel("time")
-        xdat = [xd for xd in rec.time if xd < time_range_small]
-        ydat = rec.data[:len(xdat)]
+        xdat = [xd for xd in r.time if xd < time_range_small]
+        ydat = r.data[:len(xdat)]
         plt.plot(xdat, ydat,
                  color="black",
                  linestyle="solid",
@@ -131,8 +133,8 @@ def saveFigures(records):
         plt.subplot(3,1,2)
         plt.grid(True)
         plt.xlabel("time")
-        xdat = [xd for xd in rec.time if xd < time_range_medium]
-        ydat = rec.data[:len(xdat)]
+        xdat = [xd for xd in r.time if xd < time_range_medium]
+        ydat = r.data[:len(xdat)]
         plt.plot(xdat, ydat,
                  color="black",
                  linestyle="solid",
@@ -143,29 +145,24 @@ def saveFigures(records):
         plt.subplot(3,1,3)
         plt.grid(True)
         plt.xlabel("time")
-        plt.plot(rec.time, rec.data,
+        plt.plot(r.time, r.data,
                  color="black",
                  linestyle="solid",
                  linewidth=1,
                  marker=".",
                  markersize=2)
-        plt.savefig(f"{rec.type}{rec.no}_{rec.name}")
+        plt.savefig(f"{r.type}{r.no}_{r.name}")
         plt.close()
         plt.clf()
-        print(f"Printing individual figures: {int(100*(records.index(rec)+1)/len(records))}%")
+        print(f"Printing individual figures: {int(100*(records.index(r)+1)/len(records))}%")
         gc.collect()
 
     # Combined figures ########################################################
-    rn = set()
-    for x in records:
-        rn.add(x.name)
-    rec_names = list(rn)
+    rec_names = list(set([x.name for x in records]))
     for r in rec_names:
         plt.figure(figsize=(10, 10))
         plt.suptitle(f"{r}")
-
         plt.grid(True)
-        plt.xlabel("time")
         for x in records:
             if r == x.name:
                 plt.subplot(3,1,1)
@@ -268,156 +265,79 @@ class Report(FPDF):
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
         gc.collect()
 
+
 def saveReport(records):
     report = Report()
+    rec_type_sw = [x for x in records if "SW" == x.type]
+    rec_type_vl = [x for x in records if "VL" == x.type]
+
+    rec_names = list(set([x.name for x in records]))
+    rec_vls = list(set([x.no for x in rec_type_vl]))
+    rec_sws = list(set([x.no for x in rec_type_sw]))
+
+    rec_names.sort()
+    rec_vls.sort()
+    rec_sws.sort()
 
     # general statistics section ##############################################
-    print(f"Creating pdf report - General Statistics")
-    report.add_heading_lvl1("1. General Statistics")
-    report.add_heading_lvl2("1.1. Summary")
-    for r in records:
-        if "E2ELatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.insertTextRecord(rall, "Overall E2ELatency")
-    for r in records:
-        if "ESBagLatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.insertTextRecord(rall, "Overall ESBagLatency")
-    for r in records:
-        if "ESSchedulingLatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.insertTextRecord(rall, "Overall ESSchedulingLatency")
-    for r in records:
-        if "ESTotalLatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.insertTextRecord(rall, "Overall ESTotalLatency")
-    for r in records:
-        if "SWQueueingTime" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.insertTextRecord(rall, "Overall SWQueueingTime")
-    for r in records:
-        if "SWQueueLength" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.insertTextRecord(rall, "Overall SWQueueLength")
+    print(f"Creating pdf report - Overall Statistics")
+    report.add_heading_lvl1("1. Overall Statistics")
 
-    for r in records:
-        if "E2ELatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.add_page()
-    report.add_line(f"    Combined_E2ELatency")
-    report.insertRecord(rall, "Combined_E2ELatency.png")
-    print(f"    Combined_E2ELatency.png is inserted")
-    for r in records:
-        if "ESBagLatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.add_page()
-    report.add_line(f"    Combined_ESBagLatency")
-    report.insertRecord(rall, "Combined_ESBagLatency.png")
-    print(f"    Combined_ESBagLatency.png is inserted")
-    for r in records:
-        if "ESSchedulingLatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.add_page()
-    report.add_line(f"    Combined_ESSchedulingLatency")
-    report.insertRecord(rall, "Combined_ESSchedulingLatency.png")
-    print(f"    Combined_ESSchedulingLatency.png is inserted")
-    for r in records:
-        if "ESTotalLatency" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.add_page()
-    report.add_line(f"    Combined_ESTotalLatency")
-    report.insertRecord(rall, "Combined_ESTotalLatency.png")
-    print(f"    Combined_ESTotalLatency.png is inserted")
-    for r in records:
-        if "SWQueueingTime" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.add_page()
-    report.add_line(f"    Combined_SWQueueingTime")
-    report.insertRecord(rall, "Combined_SWQueueingTime.png")
-    print(f"    Combined_SWQueueingTime.png is inserted")
-    for r in records:
-        if "SWQueueLength" in r.name:
-            rall = Record()
-            rall.data += r.data
-            rall.count += int(r.count)
-    report.add_page()
-    report.add_line(f"    Combined_SWQueueLength")
-    report.insertRecord(rall, "Combined_SWQueueLength.png")
-    print(f"    Combined_SWQueueLength.png is inserted")
+    # insert summary text
+    for nm in rec_names:
+        nsum = Record()
+        for r in records:
+            if nm == r.name:
+                nsum.data += r.data
+                nsum.count += int(r.count)
+        report.insertTextRecord(nsum, f"Overall {nm}")
+
+    # insert summary figures
+    for nm in rec_names:
+        nsum = Record()
+        for r in records:
+            if nm == r.name:
+                nsum.data += r.data
+                nsum.count += int(r.count)
+        report.add_page()
+        report.add_line(f"     Overall {nm}")
+        report.insertRecord(nsum, f"Combined_{nm}.png")
+        print(f"    Combined_{nm}.png is inserted")
 
     # per Switch statistics section(s) ########################################
     print(f"Creating pdf report - PerSwitch Statistics")
     report.add_page()
+    nonp = True
     report.add_heading_lvl1("2. Per-Switch Statistics")
-    for r in records:
-        if "SWQueueLength" in r.name:
-            if 0 != records.index(r):
-                report.add_page()
-            report.insertRecord(r, f"{r.type}{r.no}_SWQueueLength.png")
-            print(f"    {r.type}{r.no} is inserted")
+    for ns in rec_sws:
+        i = rec_sws.index(ns)
+        nonp = False if nonp else report.add_page()
+        report.add_heading_lvl2(f"2.{i + 1}. SW{ns} Statistics")
+        for nm in rec_names:
+            for r in rec_type_sw:
+                if ns == r.no and nm == r.name:
+                    report.add_line(f"    {r.name}")
+                    report.insertRecord(r, f"{r.type}{r.no}_{r.name}.png")
+        print(f"    SW{ns} is inserted")
 
     # per VL statistics section(s) ############################################
     print(f"Creating pdf report - PerVL Statistics")
     report.add_page()
+    nonp = True
     report.add_heading_lvl1("3. Per-VL Statistics")
 
-    vls = (set())
-    for r in records:
-        if "VL" in r.type:
-            vls.add(r.no)
-    VL_set = list(vls)
-
-    for vno in VL_set:
-        i = VL_set.index(vno)
-        report.add_page()
-        report.add_heading_lvl2(f"3.{i+1}. VL{vno} Statistics")
-        for r in records:
-            if "E2ELatency" in r.name and "VL" == r.type and vno == r.no:
-                report.add_line(f"    E2ELatency")
-                report.insertRecord(r, f"VL{vno}_E2ELatency.png")
-        for r in records:
-            if "ESTotalLatency" in r.name and "VL" == r.type and vno == r.no:
-                report.add_page()
-                report.add_line(f"    ESTotalLatency")
-                report.insertRecord(r, f"VL{vno}_ESTotalLatency.png")
-        for r in records:
-            if "ESSchedulingLatency" in r.name and "VL" == r.type and vno == r.no:
-                report.add_page()
-                report.add_line(f"    ESSchedulingLatency")
-                report.insertRecord(r, f"VL{vno}_ESSchedulingLatency.png")
-        for r in records:
-            if "ESBagLatency" in r.name and "VL" == r.type and vno == r.no:
-                report.add_page()
-                report.add_line(f"    ESBagLatency")
-                report.insertRecord(r, f"VL{vno}_ESBagLatency.png")
-        for r in records:
-            if "SWQueueingTime" in r.name and "VL" == r.type and vno == r.no:
-                report.add_page()
-                report.add_line(f"    SWQueueingTime")
-                report.insertRecord(r, f"VL{vno}_SWQueueingTime.png")
-        print(f"    VL{vno} is inserted")
+    for nv in rec_vls:
+        i = rec_vls.index(nv)
+        nonp = False if nonp else report.add_page()
+        nonp2 = True
+        report.add_heading_lvl2(f"3.{i + 1}. VL{nv} Statistics")
+        for nm in rec_names:
+            for r in rec_type_vl:
+                if nv == r.no and nm == r.name:
+                    nonp2 = False if nonp2 else report.add_page()
+                    report.add_line(f"    {r.name}")
+                    report.insertRecord(r, f"{r.type}{r.no}_{r.name}.png")
+        print(f"    VL{nv} is inserted")
 
     print(f"Saving report")
     # save
@@ -425,17 +345,20 @@ def saveReport(records):
     print(f"Report is ready")
 
 
-def clean():
-    for file in os.listdir():
+def clean(dir):
+    for file in os.listdir(dir):
         if file.endswith(".png"):
             os.remove(file)
             #print(f"Removing file {file}")
 
 
 if __name__ == "__main__":
-    records = getData("C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this")
-    #records = getData("C:\\Workspaces\\Github\\AFDX\\simulations\\results")
+    dir = "C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this"
+    dir_ = "C:\\Workspaces\\Github\\AFDX\\simulations\\results"
+
+    clean(".")
+    records = getData(dir)
     #printMultiRecord(records)
     saveFigures(records)
     saveReport(records)
-    clean()
+    clean(".")
