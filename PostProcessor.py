@@ -1,12 +1,13 @@
 import os
-#import pandas as pd
 import matplotlib.pyplot as plt
-#from pylab import title, figure, xlabel, ylabel, xticks, bar, legend, axis, savefig
 from fpdf import FPDF
 from datetime import datetime
 import statistics
 import math
 import gc
+import sys
+import argparse
+from time import process_time
 
 tg_95 = 1.96
 tg_99 = 2.58
@@ -58,8 +59,11 @@ class Record:
 def getData(dir):
     print(f"Reading directory contents {dir}")
     # vci file operations
+    filesFound_vci = False
+    filesFound_vec = False
     for file in os.listdir(dir):
         if file.endswith(".vci"):
+            filesFound_vci = True
             file_vci = open(os.path.join(dir, file))
             lines_vci = file_vci.readlines()
             vector_lines = [x for x in lines_vci if "vector" in x]
@@ -86,6 +90,7 @@ def getData(dir):
     # vec file operations
     for file in os.listdir(dir):
         if file.endswith(".vec"):
+            filesFound_vec = True
             file_vec = open(os.path.join(dir, file))
             lines_vec = file_vec.readlines()
             lines_splitted = list(map(str.split, lines_vec))
@@ -99,6 +104,17 @@ def getData(dir):
                 except Exception as e:
                     print(e)
             print(f"{file} is processed")
+
+    if not filesFound_vci:
+        print(f"*.vci file cannot be found in {dir}")
+    if not filesFound_vec:
+        print(f"*.vec file cannot be found in {dir}")
+    if not filesFound_vci or not filesFound_vec:
+        print(f"Files in the directory:")
+        for file in os.listdir(dir):
+            print(file)
+        sys.exit(-1)
+
     return records
 
 
@@ -107,7 +123,7 @@ def printMultiRecord(r):
         print(r[i], sep="\n")
 
 
-def saveFigures(records):
+def saveFigures(records, outDir):
 
     time_range_small = 0.02
     time_range_medium = 0.1
@@ -151,7 +167,7 @@ def saveFigures(records):
                  linewidth=1,
                  marker=".",
                  markersize=2)
-        plt.savefig(f"{r.type}{r.no}_{r.name}")
+        plt.savefig(f"{outDir}{r.type}{r.no}_{r.name}")
         plt.close()
         plt.clf()
         print(f"Printing individual figures: {int(100*(records.index(r)+1)/len(records))}%")
@@ -197,7 +213,7 @@ def saveFigures(records):
                          markersize=2,
                          label=f"{x.type}{x.no}")
         plt.legend()
-        plt.savefig(f"Combined_{r}")
+        plt.savefig(f"{outDir}Combined_{r}")
         plt.close()
         plt.clf()
         print(f"Printing combined figures: {int(100*(rec_names.index(r)+1)/len(rec_names))}%")
@@ -217,7 +233,7 @@ class Report(FPDF):
         self.set_font("Courier", "B", 28)
         self.cell(0, 10, "ANCAT Simulation Results", 0, 1, "C")
         self.set_font("Courier", "B", 20)
-        self.cell(0, 7, self.now.strftime("%H:%M    %m.%d.%Y"), 0, 1, "C")
+        self.cell(0, 7, self.now.strftime("%H:%M    %d.%m.%Y"), 0, 1, "C")
         self.cell(0, 3, "", 0, 1)
 
     def add_heading_lvl1(self, s):
@@ -244,8 +260,8 @@ class Report(FPDF):
         self.set_font("Courier", "B", 12)
         self.cell(100, 7, f"{d}", 0, 1, "L")
 
-    def save(self):
-        self.output(f"ANCAT_{self.now.strftime('%Y%m%d%H%M')}.pdf", 'F')
+    def save(self, outDir):
+        self.output(f"{outDir}ANCAT_{self.now.strftime('%Y%m%d%H%M')}.pdf", 'F')
 
     def insertRecord(self, r, s):
         self.add_line_v2(f"    Maximum            : ", r.getMax())
@@ -266,7 +282,7 @@ class Report(FPDF):
         gc.collect()
 
 
-def saveReport(records):
+def saveReport(records, outDir):
     report = Report()
     rec_type_sw = [x for x in records if "SW" == x.type]
     rec_type_vl = [x for x in records if "VL" == x.type]
@@ -301,7 +317,7 @@ def saveReport(records):
                 nsum.count += int(r.count)
         report.add_page()
         report.add_line(f"     Overall {nm}")
-        report.insertRecord(nsum, f"Combined_{nm}.png")
+        report.insertRecord(nsum, f"{outDir}Combined_{nm}.png")
         print(f"    Combined_{nm}.png is inserted")
 
     # per Switch statistics section(s) ########################################
@@ -317,7 +333,7 @@ def saveReport(records):
             for r in rec_type_sw:
                 if ns == r.no and nm == r.name:
                     report.add_line(f"    {r.name}")
-                    report.insertRecord(r, f"{r.type}{r.no}_{r.name}.png")
+                    report.insertRecord(r, f"{outDir}{r.type}{r.no}_{r.name}.png")
         print(f"    SW{ns} is inserted")
 
     # per VL statistics section(s) ############################################
@@ -336,29 +352,148 @@ def saveReport(records):
                 if nv == r.no and nm == r.name:
                     nonp2 = False if nonp2 else report.add_page()
                     report.add_line(f"    {r.name}")
-                    report.insertRecord(r, f"{r.type}{r.no}_{r.name}.png")
+                    report.insertRecord(r, f"{outDir}{r.type}{r.no}_{r.name}.png")
         print(f"    VL{nv} is inserted")
 
     print(f"Saving report")
     # save
-    report.save()
-    print(f"Report is ready")
+    report.save(outDir)
+    print(f"Report is ready at {outDir}")
 
 
-def clean(dir):
-    for file in os.listdir(dir):
+def printTextRecord(r, s):
+    print(f"    {s}:")
+    print(f"        Maximum            : {r.getMax():.6f}")
+    print(f"        Mean               : {r.getMean():.6f}")
+    if 0 != r.getMean():
+        print(f"        Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
+    gc.collect()
+
+
+def printStatistics(records):
+    rec_type_sw = [x for x in records if "SW" == x.type]
+    rec_type_vl = [x for x in records if "VL" == x.type]
+
+    rec_names = list(set([x.name for x in records]))
+    rec_vls = list(set([x.no for x in rec_type_vl]))
+    rec_sws = list(set([x.no for x in rec_type_sw]))
+
+    rec_names.sort()
+    rec_vls.sort()
+    rec_sws.sort()
+
+    # general statistics section ##############################################
+    print(f"==========================================================================================")
+    print(f"1. Overall Statistics")
+
+    # insert summary text
+    for nm in rec_names:
+        nsum = Record()
+        for r in records:
+            if nm == r.name:
+                nsum.data += r.data
+                nsum.count += int(r.count)
+        printTextRecord(nsum, f"Overall {nm}")
+
+    # insert summary figures
+    for nm in rec_names:
+        nsum = Record()
+        for r in records:
+            if nm == r.name:
+                nsum.data += r.data
+                nsum.count += int(r.count)
+        printTextRecord(nsum, f"Combined_{nm}")
+
+    # per Switch statistics section(s) ########################################
+    print("2. Per-Switch Statistics")
+    for ns in rec_sws:
+        i = rec_sws.index(ns)
+        print(f"        2.{i + 1}. SW{ns} Statistics")
+        for nm in rec_names:
+            for r in rec_type_sw:
+                if ns == r.no and nm == r.name:
+                    printTextRecord(r, f"        {r.name}")
+
+    # per VL statistics section(s) ############################################
+    print("3. Per-VL Statistics")
+
+    for nv in rec_vls:
+        i = rec_vls.index(nv)
+        print(f"    3.{i + 1}. VL{nv} Statistics")
+        for nm in rec_names:
+            for r in rec_type_vl:
+                if nv == r.no and nm == r.name:
+                    printTextRecord(r, f"        {r.name}")
+
+    print(f"==========================================================================================")
+
+
+def clean(path):
+    for file in os.listdir(path):
         if file.endswith(".png"):
-            os.remove(file)
-            #print(f"Removing file {file}")
+            os.remove(path+file)
+            # print(f"Removing file {file}")
 
 
 if __name__ == "__main__":
-    dir = "C:\\Users\\ozerg\\Desktop\\Share\\tez\\portProcessing\\this"
-    dir_ = "C:\\Workspaces\\Github\\AFDX\\simulations\\results"
 
-    clean(".")
-    records = getData(dir)
-    #printMultiRecord(records)
-    saveFigures(records)
-    saveReport(records)
-    clean(".")
+    myParser = argparse.ArgumentParser(
+        description="Creates a pdf report from the simulation result files."
+                    "Please specify the results file's location. Otherwise current directory will be searched.")
+
+    # Add the arguments
+    myParser.add_argument('-iPath',
+                          metavar="<input path>",
+                          type=str,
+                          help='Location of the simulation result files; *.vci and *.vec',
+                          required=False)
+    myParser.add_argument('-oPath',
+                          metavar="<Output path>",
+                          type=str,
+                          help='path that pdf file and figures (optional) to be located.',
+                          required=False)
+    myParser.add_argument('-keepFig',
+                          help='If this flag is given, mid-process figures will not be deleted.',
+                          action="store_true")
+    myParser.add_argument('-figAndText',
+                          help='If this flag is given, pdf report will not be generated.',
+                          action="store_true")
+    myParser.add_argument('-textOnly',
+                          help='If this flag is given, no output file will be generated, console text only',
+                          action="store_true")
+
+    args = myParser.parse_args()
+    iPath = args.iPath
+    oPath = args.oPath
+    keepFig = args.keepFig
+    figAndText = args.figAndText
+    textOnly = args.textOnly
+
+    if iPath is None:
+        iPath = ".\\"
+        print(f"Using current directory for simulation results.")
+    else:
+        print(f"Using '{iPath}' for simulation results.")
+        if not iPath.endswith("\\"):
+            iPath += "\\"
+    if oPath is None:
+        oPath = ".\\"
+        print("Using current directory for outputs.")
+    else:
+        print(f"Using '{oPath}' for outputs.")
+        if not oPath.endswith("\\"):
+            oPath += "\\"
+
+    records = getData(iPath)
+    # printMultiRecord(records)
+
+    if not textOnly or keepFig:
+        saveFigures(records, oPath)
+
+    if textOnly or figAndText:
+        printStatistics(records)
+    else:
+        saveReport(records, oPath)
+
+    if not keepFig and not figAndText:
+        clean(oPath)
