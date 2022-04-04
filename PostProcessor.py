@@ -1,13 +1,13 @@
 import os
 import matplotlib.pyplot as plt
-from fpdf import FPDF
+from reportlab.pdfgen.canvas import Canvas
 from datetime import datetime
 import statistics
 import math
 import gc
 import sys
 import argparse
-from time import process_time
+# from time import process_time
 
 tg_95 = 1.96
 tg_99 = 2.58
@@ -56,15 +56,15 @@ class Record:
         return 100*(self.getStdDev()*tg_99) / (self.getMean()*math.sqrt(self.count))
 
 
-def getData(dir):
-    print(f"Reading directory contents {dir}")
+def getData(path):
+    print(f"Reading directory contents {path}")
     # vci file operations
     filesFound_vci = False
     filesFound_vec = False
-    for file in os.listdir(dir):
+    for file in os.listdir(path):
         if file.endswith(".vci"):
             filesFound_vci = True
-            file_vci = open(os.path.join(dir, file))
+            file_vci = open(os.path.join(path, file))
             lines_vci = file_vci.readlines()
             vector_lines = [x for x in lines_vci if "vector" in x]
             vector_lines_splitted = list(map(str.split, vector_lines))
@@ -88,10 +88,10 @@ def getData(dir):
             print(f"{file} is processed")
 
     # vec file operations
-    for file in os.listdir(dir):
+    for file in os.listdir(path):
         if file.endswith(".vec"):
             filesFound_vec = True
-            file_vec = open(os.path.join(dir, file))
+            file_vec = open(os.path.join(path, file))
             lines_vec = file_vec.readlines()
             lines_splitted = list(map(str.split, lines_vec))
             for x in lines_splitted:
@@ -106,12 +106,12 @@ def getData(dir):
             print(f"{file} is processed")
 
     if not filesFound_vci:
-        print(f"*.vci file cannot be found in {dir}")
+        print(f"*.vci file cannot be found in {path}")
     if not filesFound_vec:
-        print(f"*.vec file cannot be found in {dir}")
+        print(f"*.vec file cannot be found in {path}")
     if not filesFound_vci or not filesFound_vec:
         print(f"Files in the directory:")
-        for file in os.listdir(dir):
+        for file in os.listdir(path):
             print(file)
         sys.exit(-1)
 
@@ -123,7 +123,7 @@ def printMultiRecord(r):
         print(r[i], sep="\n")
 
 
-def saveFigures(records, outDir):
+def saveFigures(records, outDir, fSize):
 
     time_range_small = 0.02
     time_range_medium = 0.1
@@ -131,10 +131,10 @@ def saveFigures(records, outDir):
     # Individual figures ######################################################
     for r in records:
         # 2D line plot
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(fSize, fSize))
         plt.suptitle(f"{r.name} for {r.type}{r.no}" + " in " + r.block)
 
-        plt.subplot(3,1,1)
+        plt.subplot(3, 1, 1)
         plt.grid(True)
         plt.xlabel("time")
         xdat = [xd for xd in r.time if xd < time_range_small]
@@ -146,7 +146,7 @@ def saveFigures(records, outDir):
                  marker=".",
                  markersize=10)
 
-        plt.subplot(3,1,2)
+        plt.subplot(3, 1, 2)
         plt.grid(True)
         plt.xlabel("time")
         xdat = [xd for xd in r.time if xd < time_range_medium]
@@ -158,7 +158,7 @@ def saveFigures(records, outDir):
                  marker=".",
                  markersize=5)
 
-        plt.subplot(3,1,3)
+        plt.subplot(3, 1, 3)
         plt.grid(True)
         plt.xlabel("time")
         plt.plot(r.time, r.data,
@@ -176,12 +176,12 @@ def saveFigures(records, outDir):
     # Combined figures ########################################################
     rec_names = list(set([x.name for x in records]))
     for r in rec_names:
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(fSize, fSize))
         plt.suptitle(f"{r}")
         plt.grid(True)
         for x in records:
             if r == x.name:
-                plt.subplot(3,1,1)
+                plt.subplot(3, 1, 1)
                 plt.grid(True)
                 plt.xlabel("time")
                 xdat = [xd for xd in x.time if xd < time_range_small]
@@ -192,7 +192,7 @@ def saveFigures(records, outDir):
                          marker=".",
                          markersize=10,
                          label=f"{x.type}{x.no}")
-                plt.subplot(3,1,2)
+                plt.subplot(3, 1, 2)
                 plt.grid(True)
                 plt.xlabel("time")
                 xdat = [xd for xd in x.time if xd < time_range_medium]
@@ -203,7 +203,7 @@ def saveFigures(records, outDir):
                          marker=".",
                          markersize=5,
                          label=f"{x.type}{x.no}")
-                plt.subplot(3,1,3)
+                plt.subplot(3, 1, 3)
                 plt.grid(True)
                 plt.xlabel("time")
                 plt.plot(x.time, x.data,
@@ -220,48 +220,58 @@ def saveFigures(records, outDir):
         gc.collect()
 
 
-class Report(FPDF):
-    def __init__(self):
-        FPDF.__init__(self)
+class Report(Canvas):
+    def __init__(self, outDir, name):
         self.now = datetime.now()
-        self.set_title("ANCAT Simulation Results")
-        self.set_author("ANCAT")
+        if name:
+            self.reportname = name
+        else:
+            self.reportname = f"ANCAT_{self.now.strftime('%Y%m%d%H%M')}"
+        Canvas.__init__(self, f"{outDir}{self.reportname}.pdf")
 
-        self.add_page()
+        self.currentX = 40
+        self.currentY = 800
+
+        self.setTitle("ANCAT Simulation Results")
+        self.setAuthor("ANCAT")
 
         # add title
-        self.set_font("Courier", "B", 28)
-        self.cell(0, 10, "ANCAT Simulation Results", 0, 1, "C")
-        self.set_font("Courier", "B", 20)
-        self.cell(0, 7, self.now.strftime("%H:%M    %d.%m.%Y"), 0, 1, "C")
-        self.cell(0, 3, "", 0, 1)
+        self.setFont("Courier-Bold", 28)
+        self.drawString(self.currentX+50, self.currentY, "ANCAT Simulation Results")
+        self.currentY -= 34
+        self.setFont("Courier-Bold", 20)
+        self.drawString(self.currentX+150, self.currentY, self.now.strftime("%H:%M    %d.%m.%Y"))
+        self.currentY -= 34
 
     def add_heading_lvl1(self, s):
-        self.set_font("Courier", "B", 18)
-        self.cell(0, 5, "", 0, 1)
-        self.cell(0, 10, s, 0, 1, "L")
-        self.cell(0, 3, "", 0, 1)
+        self.setFont("Courier-Bold", 18)
+        self.drawString(self.currentX, self.currentY, s)
+        self.currentY -= 22
 
     def add_heading_lvl2(self, s):
-        self.set_font("Courier", "B", 14)
-        self.cell(0, 2, "", 0, 1)
-        self.cell(5)
-        self.cell(0, 10, s, 0, 1, "L")
+        self.setFont("Courier-Bold", 14)
+        self.drawString(self.currentX+20, self.currentY, s)
+        self.currentY -= 18
 
     def add_line(self, s):
-        self.set_font("Courier", "", 12)
-        self.cell(10)
-        self.cell(0, 7, s, 0, 1, "L")
+        self.setFont("Courier", 12)
+        self.drawString(self.currentX+40, self.currentY, s)
+        self.currentY -= 16
 
     def add_line_v2(self, s, d):
-        self.set_font("Courier", "", 12)
-        self.cell(10)
-        self.cell(100, 7, s, 0, 0, "L")
-        self.set_font("Courier", "B", 12)
-        self.cell(100, 7, f"{d}", 0, 1, "L")
+        self.setFont("Courier", 12)
+        self.drawString(self.currentX+40, self.currentY, s)
+        self.setFont("Courier-Bold", 12)
+        self.drawString(self.currentX+240, self.currentY, f"{d}")
+        self.currentY -= 16
 
-    def save(self, outDir):
-        self.output(f"{outDir}ANCAT_{self.now.strftime('%Y%m%d%H%M')}.pdf", 'F')
+    def pageBreak(self):
+        self.showPage()
+        self.currentX = 40
+        self.currentY = 800
+
+    def savePDF(self):
+        self.save()
 
     def insertRecord(self, r, s):
         self.add_line_v2(f"    Maximum            : ", r.getMax())
@@ -270,7 +280,7 @@ class Report(FPDF):
         if 0 != r.getMean():
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
             self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
-        self.image(s, x=None, y=None, w=200, h=0, type="", link="")
+        self.insertImage(s)
         gc.collect()
 
     def insertTextRecord(self, r, s):
@@ -281,9 +291,14 @@ class Report(FPDF):
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
         gc.collect()
 
+    def insertImage(self, s):
+        self.drawImage(s, x=0, y=-150, width=600, preserveAspectRatio=True)
+        self.currentY -= 750
+        gc.collect()
 
-def saveReport(records, outDir):
-    report = Report()
+
+def saveReport(records, outDir, filename):
+    report = Report(outDir, filename)
     rec_type_sw = [x for x in records if "SW" == x.type]
     rec_type_vl = [x for x in records if "VL" == x.type]
 
@@ -315,19 +330,19 @@ def saveReport(records, outDir):
             if nm == r.name:
                 nsum.data += r.data
                 nsum.count += int(r.count)
-        report.add_page()
+        report.pageBreak()
         report.add_line(f"     Overall {nm}")
         report.insertRecord(nsum, f"{outDir}Combined_{nm}.png")
         print(f"    Combined_{nm}.png is inserted")
 
     # per Switch statistics section(s) ########################################
     print(f"Creating pdf report - PerSwitch Statistics")
-    report.add_page()
+    report.pageBreak()
     nonp = True
     report.add_heading_lvl1("2. Per-Switch Statistics")
     for ns in rec_sws:
         i = rec_sws.index(ns)
-        nonp = False if nonp else report.add_page()
+        nonp = False if nonp else report.pageBreak()
         report.add_heading_lvl2(f"2.{i + 1}. SW{ns} Statistics")
         for nm in rec_names:
             for r in rec_type_sw:
@@ -338,27 +353,27 @@ def saveReport(records, outDir):
 
     # per VL statistics section(s) ############################################
     print(f"Creating pdf report - PerVL Statistics")
-    report.add_page()
+    report.pageBreak()
     nonp = True
     report.add_heading_lvl1("3. Per-VL Statistics")
 
     for nv in rec_vls:
         i = rec_vls.index(nv)
-        nonp = False if nonp else report.add_page()
+        nonp = False if nonp else report.pageBreak()
         nonp2 = True
         report.add_heading_lvl2(f"3.{i + 1}. VL{nv} Statistics")
         for nm in rec_names:
             for r in rec_type_vl:
                 if nv == r.no and nm == r.name:
-                    nonp2 = False if nonp2 else report.add_page()
+                    nonp2 = False if nonp2 else report.pageBreak()
                     report.add_line(f"    {r.name}")
                     report.insertRecord(r, f"{outDir}{r.type}{r.no}_{r.name}.png")
         print(f"    VL{nv} is inserted")
 
     print(f"Saving report")
     # save
-    report.save(outDir)
-    print(f"Report is ready at {outDir}")
+    report.savePDF()
+    print(f"Report is ready at {outDir}{filename}")
 
 
 def printTextRecord(r, s):
@@ -452,6 +467,11 @@ if __name__ == "__main__":
                           type=str,
                           help='path that pdf file and figures (optional) to be located.',
                           required=False)
+    myParser.add_argument('-oFile',
+                          metavar="<Output path>",
+                          type=str,
+                          help='Name of the output pdf report, optional',
+                          required=False)
     myParser.add_argument('-keepFig',
                           help='If this flag is given, mid-process figures will not be deleted.',
                           action="store_true")
@@ -468,6 +488,7 @@ if __name__ == "__main__":
     keepFig = args.keepFig
     figAndText = args.figAndText
     textOnly = args.textOnly
+    oFile = args.oFile
 
     if iPath is None:
         iPath = ".\\"
@@ -483,17 +504,22 @@ if __name__ == "__main__":
         print(f"Using '{oPath}' for outputs.")
         if not oPath.endswith("\\"):
             oPath += "\\"
+    if oFile is None:
+        oFile = ""
+    else:
+        if not oFile.endswith(".pdf"):
+            oFile += ".pdf"
 
     records = getData(iPath)
     # printMultiRecord(records)
 
     if not textOnly or keepFig:
-        saveFigures(records, oPath)
+        saveFigures(records, oPath, 10)
 
     if textOnly or figAndText:
         printStatistics(records)
     else:
-        saveReport(records, oPath)
+        saveReport(records, oPath, oFile)
 
     if not keepFig and not figAndText:
         clean(oPath)
