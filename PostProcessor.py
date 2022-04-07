@@ -179,6 +179,7 @@ def saveFigures(records, outDir, fSize):
         plt.figure(figsize=(fSize, fSize))
         plt.suptitle(f"{r}")
         plt.grid(True)
+
         for x in records:
             if r == x.name:
                 plt.subplot(3, 1, 1)
@@ -192,6 +193,7 @@ def saveFigures(records, outDir, fSize):
                          marker=".",
                          markersize=10,
                          label=f"{x.type}{x.no}")
+                plt.legend(loc ="upper right")
                 plt.subplot(3, 1, 2)
                 plt.grid(True)
                 plt.xlabel("time")
@@ -212,7 +214,7 @@ def saveFigures(records, outDir, fSize):
                          marker=".",
                          markersize=2,
                          label=f"{x.type}{x.no}")
-        plt.legend()
+        #plt.legend()
         plt.savefig(f"{outDir}Combined_{r}")
         plt.close()
         plt.clf()
@@ -504,11 +506,11 @@ if __name__ == "__main__":
         print(f"Using '{oPath}' for outputs.")
         if not oPath.endswith("\\"):
             oPath += "\\"
-    if oFile is None:
-        oFile = ""
-    else:
-        if not oFile.endswith(".pdf"):
-            oFile += ".pdf"
+    # if oFile is None:
+    #     oFile = ""
+    # else:
+    #     if not oFile.endswith(".pdf"):
+    #         oFile += ".pdf"
 
     records = getData(iPath)
     # printMultiRecord(records)

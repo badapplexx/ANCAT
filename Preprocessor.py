@@ -12,7 +12,7 @@ myParser = argparse.ArgumentParser(description='Creates *.ini files and config t
                                                 'Otherwise current directory will be searched for and first one found will be used.')
 
 # Add the arguments
-myParser.add_argument('-iFile',
+myParser.add_argument('-iPath',
                       metavar="<input path>",
                       type=str,
                       help='location of the input *.xlsx file',
@@ -24,7 +24,7 @@ myParser.add_argument('-oPath',
                       required=False)
 # Execute the parse_args() method
 args = myParser.parse_args()
-i = args.iFile
+i = args.iPath
 o = args.oPath
 
 if i is None:
