@@ -277,7 +277,7 @@ class Report(Canvas):
         self.add_line_v2(f"    Maximum            : ", r.getMax())
         self.add_line_v2(f"    Minimum            : ", r.getMin())
         self.add_line_v2(f"    Mean               : ", r.getMean())
-        if 0 != r.getMean():
+        if 0 != r.getMean() and r.count >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
             self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
         self.insertImage(s)
@@ -287,7 +287,7 @@ class Report(Canvas):
         self.add_line(f"{s}:")
         self.add_line_v2(f"    Maximum            : ", r.getMax())
         self.add_line_v2(f"    Mean               : ", r.getMean())
-        if 0 != r.getMean():
+        if 0 != r.getMean() and r.count >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
         gc.collect()
 
@@ -380,7 +380,7 @@ def printTextRecord(r, s):
     print(f"    {s}:")
     print(f"        Maximum            : {r.getMax():.6f}")
     print(f"        Mean               : {r.getMean():.6f}")
-    if 0 != r.getMean():
+    if 0 != r.getMean() and r.count >= 2:
         print(f"        Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
     gc.collect()
 
