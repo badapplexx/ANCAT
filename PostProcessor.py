@@ -7,10 +7,15 @@ import math
 import gc
 import sys
 import argparse
+import shutil
 # from time import process_time
 
 tg_95 = 1.96
 tg_99 = 2.58
+
+report_now = datetime.now()
+report_now_tag = f"{report_now.strftime('%Y%m%d%H%M')}"
+figPath = f"ANCAT_figures_{report_now_tag}\\"
 
 
 class Record:
@@ -124,7 +129,7 @@ def printMultiRecord(r):
 
 
 def saveFigures(records, outDir, fSize):
-
+    os.mkdir(f"{outDir}{figPath}")
     time_range_small = 0.02
     time_range_medium = 0.1
 
@@ -136,38 +141,36 @@ def saveFigures(records, outDir, fSize):
 
         plt.subplot(3, 1, 1)
         plt.grid(True)
-        plt.xlabel("time")
+        plt.xlabel("Time (ms)")
         xdat = [xd for xd in r.time if xd < time_range_small]
         ydat = r.data[:len(xdat)]
-        plt.plot(xdat, ydat,
+        plt.plot([1000 * x for x in xdat], ydat,
                  color="black",
                  linestyle="solid",
                  linewidth=1,
                  marker=".",
                  markersize=10)
-
         plt.subplot(3, 1, 2)
         plt.grid(True)
-        plt.xlabel("time")
+        plt.xlabel("Time (ms)")
         xdat = [xd for xd in r.time if xd < time_range_medium]
         ydat = r.data[:len(xdat)]
-        plt.plot(xdat, ydat,
+        plt.plot([1000 * x for x in xdat], ydat,
                  color="black",
                  linestyle="solid",
                  linewidth=1,
                  marker=".",
                  markersize=5)
-
         plt.subplot(3, 1, 3)
         plt.grid(True)
-        plt.xlabel("time")
+        plt.xlabel("Time (s)")
         plt.plot(r.time, r.data,
                  color="black",
                  linestyle="solid",
                  linewidth=1,
                  marker=".",
                  markersize=2)
-        plt.savefig(f"{outDir}{r.type}{r.no}_{r.name}")
+        plt.savefig(f"{outDir}{figPath}{r.type}{r.no}_{r.name}")
         plt.close()
         plt.clf()
         print(f"Printing individual figures: {int(100*(records.index(r)+1)/len(records))}%")
@@ -184,22 +187,21 @@ def saveFigures(records, outDir, fSize):
             if r == x.name:
                 plt.subplot(3, 1, 1)
                 plt.grid(True)
-                plt.xlabel("time")
+                plt.xlabel("Time (ms)")
                 xdat = [xd for xd in x.time if xd < time_range_small]
                 ydat = x.data[:len(xdat)]
-                plt.plot(xdat, ydat,
+                plt.plot([1000 * x for x in xdat], ydat,
                          linestyle="solid",
                          linewidth=1,
                          marker=".",
                          markersize=10,
                          label=f"{x.type}{x.no}")
-                plt.legend(loc ="upper right")
                 plt.subplot(3, 1, 2)
                 plt.grid(True)
-                plt.xlabel("time")
+                plt.xlabel("Time (ms)")
                 xdat = [xd for xd in x.time if xd < time_range_medium]
                 ydat = x.data[:len(xdat)]
-                plt.plot(xdat, ydat,
+                plt.plot([1000 * x for x in xdat], ydat,
                          linestyle="solid",
                          linewidth=1,
                          marker=".",
@@ -207,15 +209,16 @@ def saveFigures(records, outDir, fSize):
                          label=f"{x.type}{x.no}")
                 plt.subplot(3, 1, 3)
                 plt.grid(True)
-                plt.xlabel("time")
+                plt.xlabel("Time (s)")
                 plt.plot(x.time, x.data,
                          linestyle="solid",
                          linewidth=0.5,
                          marker=".",
                          markersize=2,
                          label=f"{x.type}{x.no}")
-        #plt.legend()
-        plt.savefig(f"{outDir}Combined_{r}")
+        plt.subplot(3, 1, 1)
+        plt.legend(loc="upper right")
+        plt.savefig(f"{outDir}{figPath}Combined_{r}")
         plt.close()
         plt.clf()
         print(f"Printing combined figures: {int(100*(rec_names.index(r)+1)/len(rec_names))}%")
@@ -224,11 +227,10 @@ def saveFigures(records, outDir, fSize):
 
 class Report(Canvas):
     def __init__(self, outDir, name):
-        self.now = datetime.now()
         if name:
-            self.reportname = name
+            self.reportname = f"{name}_ANCAT_{report_now_tag}"
         else:
-            self.reportname = f"ANCAT_{self.now.strftime('%Y%m%d%H%M')}"
+            self.reportname = f"ANCAT_{report_now_tag}"
         Canvas.__init__(self, f"{outDir}{self.reportname}.pdf")
 
         self.currentX = 40
@@ -242,7 +244,7 @@ class Report(Canvas):
         self.drawString(self.currentX+50, self.currentY, "ANCAT Simulation Results")
         self.currentY -= 34
         self.setFont("Courier-Bold", 20)
-        self.drawString(self.currentX+150, self.currentY, self.now.strftime("%H:%M    %d.%m.%Y"))
+        self.drawString(self.currentX+150, self.currentY, report_now.strftime("%H:%M    %d.%m.%Y"))
         self.currentY -= 34
 
     def add_heading_lvl1(self, s):
@@ -334,7 +336,7 @@ def saveReport(records, outDir, filename):
                 nsum.count += int(r.count)
         report.pageBreak()
         report.add_line(f"     Overall {nm}")
-        report.insertRecord(nsum, f"{outDir}Combined_{nm}.png")
+        report.insertRecord(nsum, f"{outDir}{figPath}Combined_{nm}.png")
         print(f"    Combined_{nm}.png is inserted")
 
     # per Switch statistics section(s) ########################################
@@ -350,7 +352,7 @@ def saveReport(records, outDir, filename):
             for r in rec_type_sw:
                 if ns == r.no and nm == r.name:
                     report.add_line(f"    {r.name}")
-                    report.insertRecord(r, f"{outDir}{r.type}{r.no}_{r.name}.png")
+                    report.insertRecord(r, f"{outDir}{figPath}{r.type}{r.no}_{r.name}.png")
         print(f"    SW{ns} is inserted")
 
     # per VL statistics section(s) ############################################
@@ -369,7 +371,7 @@ def saveReport(records, outDir, filename):
                 if nv == r.no and nm == r.name:
                     nonp2 = False if nonp2 else report.pageBreak()
                     report.add_line(f"    {r.name}")
-                    report.insertRecord(r, f"{outDir}{r.type}{r.no}_{r.name}.png")
+                    report.insertRecord(r, f"{outDir}{figPath}{r.type}{r.no}_{r.name}.png")
         print(f"    VL{nv} is inserted")
 
     print(f"Saving report")
@@ -446,10 +448,7 @@ def printStatistics(records):
 
 
 def clean(path):
-    for file in os.listdir(path):
-        if file.endswith(".png"):
-            os.remove(path+file)
-            # print(f"Removing file {file}")
+    shutil.rmtree(f"{path}{figPath}")
 
 
 if __name__ == "__main__":
@@ -506,11 +505,8 @@ if __name__ == "__main__":
         print(f"Using '{oPath}' for outputs.")
         if not oPath.endswith("\\"):
             oPath += "\\"
-    # if oFile is None:
-    #     oFile = ""
-    # else:
-    #     if not oFile.endswith(".pdf"):
-    #         oFile += ".pdf"
+    if oFile is not None:
+        figPath = f"{oFile}_{figPath}"
 
     records = getData(iPath)
     # printMultiRecord(records)
