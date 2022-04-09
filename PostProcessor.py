@@ -1,4 +1,5 @@
 import os
+import matplotlib
 import matplotlib.pyplot as plt
 from reportlab.pdfgen.canvas import Canvas
 from datetime import datetime
@@ -9,6 +10,8 @@ import sys
 import argparse
 import shutil
 # from time import process_time
+
+matplotlib.use('Agg')
 
 tg_95 = 1.96
 tg_99 = 2.58
@@ -128,59 +131,60 @@ def printMultiRecord(r):
         print(r[i], sep="\n")
 
 
-def saveFigures(records, outDir, fSize):
+def saveFigures(records, outDir, fSize, summaryOnly):
     os.mkdir(f"{outDir}{figPath}")
     time_range_small = 0.02
     time_range_medium = 0.1
 
     # Individual figures ######################################################
-    for r in records:
-        # 2D line plot
-        plt.figure(figsize=(fSize, fSize))
-        plt.suptitle(f"{r.name} for {r.type}{r.no}" + " in " + r.block)
+    if not summaryOnly:
+        for r in records:
+            # 2D line plot
+            plt.figure(figsize=(fSize, fSize))
+            plt.suptitle(f"{r.name} for {r.type}{r.no}" + " in " + r.block)
 
-        plt.subplot(3, 1, 1)
-        plt.grid(True)
-        plt.xlabel("Time (ms)")
-        xdat = [xd for xd in r.time if xd < time_range_small]
-        ydat = r.data[:len(xdat)]
-        plt.plot([1000 * x for x in xdat], ydat,
-                 color="black",
-                 linestyle="solid",
-                 linewidth=1,
-                 marker=".",
-                 markersize=10)
-        plt.subplot(3, 1, 2)
-        plt.grid(True)
-        plt.xlabel("Time (ms)")
-        xdat = [xd for xd in r.time if xd < time_range_medium]
-        ydat = r.data[:len(xdat)]
-        plt.plot([1000 * x for x in xdat], ydat,
-                 color="black",
-                 linestyle="solid",
-                 linewidth=1,
-                 marker=".",
-                 markersize=5)
-        plt.subplot(3, 1, 3)
-        plt.grid(True)
-        plt.xlabel("Time (s)")
-        plt.plot(r.time, r.data,
-                 color="black",
-                 linestyle="solid",
-                 linewidth=1,
-                 marker=".",
-                 markersize=2)
-        plt.savefig(f"{outDir}{figPath}{r.type}{r.no}_{r.name}")
-        plt.close()
-        plt.clf()
-        print(f"Printing individual figures: {int(100*(records.index(r)+1)/len(records))}%")
-        gc.collect()
+            plt.subplot(3, 1, 1)
+            plt.grid(True)
+            plt.xlabel("Time (ms)")
+            xdat = [xd for xd in r.time if xd < time_range_small]
+            ydat = r.data[:len(xdat)]
+            plt.plot([1000 * x for x in xdat], ydat,
+                     color="black",
+                     linestyle="solid",
+                     linewidth=1,
+                     marker=".",
+                     markersize=10)
+            plt.subplot(3, 1, 2)
+            plt.grid(True)
+            plt.xlabel("Time (ms)")
+            xdat = [xd for xd in r.time if xd < time_range_medium]
+            ydat = r.data[:len(xdat)]
+            plt.plot([1000 * x for x in xdat], ydat,
+                     color="black",
+                     linestyle="solid",
+                     linewidth=1,
+                     marker=".",
+                     markersize=5)
+            plt.subplot(3, 1, 3)
+            plt.grid(True)
+            plt.xlabel("Time (s)")
+            plt.plot(r.time, r.data,
+                     color="black",
+                     linestyle="solid",
+                     linewidth=1,
+                     marker=".",
+                     markersize=2)
+            plt.savefig(f"{outDir}{figPath}{r.type}{r.no}_{r.name}")
+            plt.clf()
+            plt.close("all")
+            print(f"Printing individual figures: {int(100*(records.index(r)+1)/len(records))}%")
+            gc.collect()
 
     # Combined figures ########################################################
     rec_names = list(set([x.name for x in records]))
     for r in rec_names:
         plt.figure(figsize=(fSize, fSize))
-        plt.suptitle(f"{r}")
+        plt.suptitle(f"{r}", y=0.05)
         plt.grid(True)
 
         for x in records:
@@ -217,10 +221,11 @@ def saveFigures(records, outDir, fSize):
                          markersize=2,
                          label=f"{x.type}{x.no}")
         plt.subplot(3, 1, 1)
-        plt.legend(loc="upper right")
+        handles, labels = plt.gca().get_legend_handles_labels()
+        plt.legend(handles, labels, bbox_to_anchor=(0, 1, 1, 1), loc="lower center", fancybox=True, ncol=8)
         plt.savefig(f"{outDir}{figPath}Combined_{r}")
-        plt.close()
         plt.clf()
+        plt.close("all")
         print(f"Printing combined figures: {int(100*(rec_names.index(r)+1)/len(rec_names))}%")
         gc.collect()
 
@@ -247,6 +252,9 @@ class Report(Canvas):
         self.drawString(self.currentX+150, self.currentY, report_now.strftime("%H:%M    %d.%m.%Y"))
         self.currentY -= 34
 
+    def getFileName(self):
+        return self.reportname
+
     def add_heading_lvl1(self, s):
         self.setFont("Courier-Bold", 18)
         self.drawString(self.currentX, self.currentY, s)
@@ -265,8 +273,9 @@ class Report(Canvas):
     def add_line_v2(self, s, d):
         self.setFont("Courier", 12)
         self.drawString(self.currentX+40, self.currentY, s)
+        self.drawString(self.currentX+270, self.currentY, ": ")
         self.setFont("Courier-Bold", 12)
-        self.drawString(self.currentX+240, self.currentY, f"{d}")
+        self.drawString(self.currentX+280, self.currentY, f"{d}")
         self.currentY -= 16
 
     def pageBreak(self):
@@ -278,9 +287,9 @@ class Report(Canvas):
         self.save()
 
     def insertRecord(self, r, s):
-        self.add_line_v2(f"    Maximum            : ", r.getMax())
-        self.add_line_v2(f"    Minimum            : ", r.getMin())
-        self.add_line_v2(f"    Mean               : ", r.getMean())
+        self.add_line_v2(f"    Maximum", r.getMax())
+        self.add_line_v2(f"    Minimum", r.getMin())
+        self.add_line_v2(f"    Mean", r.getMean())
         if 0 != r.getMean() and r.count >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
             self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
@@ -289,8 +298,8 @@ class Report(Canvas):
 
     def insertTextRecord(self, r, s):
         self.add_line(f"{s}:")
-        self.add_line_v2(f"    Maximum            : ", r.getMax())
-        self.add_line_v2(f"    Mean               : ", r.getMean())
+        self.add_line_v2(f"    Maximum", r.getMax())
+        self.add_line_v2(f"    Mean", r.getMean())
         if 0 != r.getMean() and r.count >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
         gc.collect()
@@ -301,7 +310,7 @@ class Report(Canvas):
         gc.collect()
 
 
-def saveReport(records, outDir, filename):
+def saveReport(records, outDir, filename, summaryOnly):
     report = Report(outDir, filename)
     rec_type_sw = [x for x in records if "SW" == x.type]
     rec_type_vl = [x for x in records if "VL" == x.type]
@@ -325,7 +334,16 @@ def saveReport(records, outDir, filename):
             if nm == r.name:
                 nsum.data += r.data
                 nsum.count += int(r.count)
-        report.insertTextRecord(nsum, f"Overall {nm}")
+        if "Dropped" in nm:
+            total_packages = 0
+            for rcc in records:
+                if "ESBag" in rcc.name: # count frames over ESBagLatency records
+                    total_packages += rcc.count
+            report.add_line_v2(f"Overall Total Frame Count", total_packages)
+            report.add_line_v2(f"Overall Dropped Frame Count", nsum.count)
+            report.add_line_v2(f"Overall Dropped Frame Percentage", nsum.count/total_packages)
+        else:
+            report.insertTextRecord(nsum, f"Overall {nm}")
 
     # insert summary figures
     for nm in rec_names:
@@ -334,50 +352,64 @@ def saveReport(records, outDir, filename):
             if nm == r.name:
                 nsum.data += r.data
                 nsum.count += int(r.count)
-        report.pageBreak()
-        report.add_line(f"     Overall {nm}")
-        report.insertRecord(nsum, f"{outDir}{figPath}Combined_{nm}.png")
-        print(f"    Combined_{nm}.png is inserted")
+        if "Dropped" not in nm:
+            report.pageBreak()
+            report.add_line(f"     Overall {nm}")
+            report.insertRecord(nsum, f"{outDir}{figPath}Combined_{nm}.png")
+            print(f"    Combined_{nm}.png is inserted")
 
     # per Switch statistics section(s) ########################################
     print(f"Creating pdf report - PerSwitch Statistics")
-    report.pageBreak()
-    nonp = True
-    report.add_heading_lvl1("2. Per-Switch Statistics")
-    for ns in rec_sws:
-        i = rec_sws.index(ns)
-        nonp = False if nonp else report.pageBreak()
-        report.add_heading_lvl2(f"2.{i + 1}. SW{ns} Statistics")
-        for nm in rec_names:
-            for r in rec_type_sw:
-                if ns == r.no and nm == r.name:
-                    report.add_line(f"    {r.name}")
-                    report.insertRecord(r, f"{outDir}{figPath}{r.type}{r.no}_{r.name}.png")
-        print(f"    SW{ns} is inserted")
+    if not summaryOnly:
+        report.pageBreak()
+        nonp = True
+        report.add_heading_lvl1("2. Per-Switch Statistics")
+        for ns in rec_sws:
+            i = rec_sws.index(ns)
+            nonp = False if nonp else report.pageBreak()
+            report.add_heading_lvl2(f"2.{i + 1}. SW{ns} Statistics")
+            for nm in rec_names:
+                for r in rec_type_sw:
+                    if ns == r.no and nm == r.name:
+                        report.add_line(f"    {r.name}")
+                        report.insertRecord(r, f"{outDir}{figPath}{r.type}{r.no}_{r.name}.png")
+            print(f"    SW{ns} is inserted")
 
     # per VL statistics section(s) ############################################
     print(f"Creating pdf report - PerVL Statistics")
-    report.pageBreak()
-    nonp = True
-    report.add_heading_lvl1("3. Per-VL Statistics")
+    if not summaryOnly:
+        report.pageBreak()
+        nonp = True
+        report.add_heading_lvl1("3. Per-VL Statistics")
 
-    for nv in rec_vls:
-        i = rec_vls.index(nv)
-        nonp = False if nonp else report.pageBreak()
-        nonp2 = True
-        report.add_heading_lvl2(f"3.{i + 1}. VL{nv} Statistics")
-        for nm in rec_names:
+        for nv in rec_vls:
+            i = rec_vls.index(nv)
+            nonp = False if nonp else report.pageBreak()
+            nonp2 = True
+            report.add_heading_lvl2(f"3.{i + 1}. VL{nv} Statistics")
+
+            total_packages = 0
             for r in rec_type_vl:
-                if nv == r.no and nm == r.name:
-                    nonp2 = False if nonp2 else report.pageBreak()
-                    report.add_line(f"    {r.name}")
-                    report.insertRecord(r, f"{outDir}{figPath}{r.type}{r.no}_{r.name}.png")
-        print(f"    VL{nv} is inserted")
+                if nv == r.no and "ESBag" in r.name:  # count frames over ESBagLatency records
+                    total_packages = r.count
+            for r in rec_type_vl:
+                if nv == r.no and "Dropped" in r.name:
+                    report.add_line_v2(f"Total Frame Count", total_packages)
+                    report.add_line_v2(f"Dropped Frame Count", r.count)
+                    report.add_line_v2(f"Dropped Frame Percentage", r.count / total_packages)
+            for nm in rec_names:
+                if "Dropped" not in nm :
+                    for r in rec_type_vl:
+                        if nv == r.no and nm == r.name:
+                            nonp2 = False if nonp2 else report.pageBreak()
+                            report.add_line(f"    {r.name}")
+                            report.insertRecord(r, f"{outDir}{figPath}{r.type}{r.no}_{r.name}.png")
+            print(f"    VL{nv} is inserted")
 
     print(f"Saving report")
     # save
     report.savePDF()
-    print(f"Report is ready at {outDir}{filename}")
+    print(f"Report is ready at {outDir}{report.getFileName()}")
 
 
 def printTextRecord(r, s):
@@ -389,7 +421,7 @@ def printTextRecord(r, s):
     gc.collect()
 
 
-def printStatistics(records):
+def printStatistics(records, summaryOnly):
     rec_type_sw = [x for x in records if "SW" == x.type]
     rec_type_vl = [x for x in records if "VL" == x.type]
 
@@ -424,25 +456,26 @@ def printStatistics(records):
         printTextRecord(nsum, f"Combined_{nm}")
 
     # per Switch statistics section(s) ########################################
-    print("2. Per-Switch Statistics")
-    for ns in rec_sws:
-        i = rec_sws.index(ns)
-        print(f"        2.{i + 1}. SW{ns} Statistics")
-        for nm in rec_names:
-            for r in rec_type_sw:
-                if ns == r.no and nm == r.name:
-                    printTextRecord(r, f"        {r.name}")
+    if not summaryOnly:
+        print("2. Per-Switch Statistics")
+        for ns in rec_sws:
+            i = rec_sws.index(ns)
+            print(f"        2.{i + 1}. SW{ns} Statistics")
+            for nm in rec_names:
+                for r in rec_type_sw:
+                    if ns == r.no and nm == r.name:
+                        printTextRecord(r, f"        {r.name}")
 
     # per VL statistics section(s) ############################################
     print("3. Per-VL Statistics")
-
-    for nv in rec_vls:
-        i = rec_vls.index(nv)
-        print(f"    3.{i + 1}. VL{nv} Statistics")
-        for nm in rec_names:
-            for r in rec_type_vl:
-                if nv == r.no and nm == r.name:
-                    printTextRecord(r, f"        {r.name}")
+    if not summaryOnly:
+        for nv in rec_vls:
+            i = rec_vls.index(nv)
+            print(f"    3.{i + 1}. VL{nv} Statistics")
+            for nm in rec_names:
+                for r in rec_type_vl:
+                    if nv == r.no and nm == r.name:
+                        printTextRecord(r, f"        {r.name}")
 
     print(f"==========================================================================================")
 
@@ -482,6 +515,9 @@ if __name__ == "__main__":
     myParser.add_argument('-textOnly',
                           help='If this flag is given, no output file will be generated, console text only',
                           action="store_true")
+    myParser.add_argument('-summaryOnly',
+                          help='If this flag is given, perVL and per Switch statistics will not be generated',
+                          action="store_true")
 
     args = myParser.parse_args()
     iPath = args.iPath
@@ -490,21 +526,26 @@ if __name__ == "__main__":
     figAndText = args.figAndText
     textOnly = args.textOnly
     oFile = args.oFile
+    summaryOnly = args.summaryOnly
 
     if iPath is None:
         iPath = ".\\"
-        print(f"Using current directory for simulation results.")
+        print(f"Using current directory for simulation data.")
     else:
-        print(f"Using '{iPath}' for simulation results.")
         if not iPath.endswith("\\"):
             iPath += "\\"
+        print(f"Using '{iPath}' for simulation data.")
     if oPath is None:
         oPath = ".\\"
         print("Using current directory for outputs.")
     else:
-        print(f"Using '{oPath}' for outputs.")
-        if not oPath.endswith("\\"):
-            oPath += "\\"
+        if oPath == "same":
+            oPath = iPath
+            print("Using input directory for outputs.")
+        else:
+            if not oPath.endswith("\\"):
+                oPath += "\\"
+            print(f"Using '{oPath}' for outputs.")
     if oFile is not None:
         figPath = f"{oFile}_{figPath}"
 
@@ -512,12 +553,12 @@ if __name__ == "__main__":
     # printMultiRecord(records)
 
     if not textOnly or keepFig:
-        saveFigures(records, oPath, 10)
+        saveFigures(records, oPath, 10, summaryOnly)
 
     if textOnly or figAndText:
-        printStatistics(records)
+        printStatistics(records, summaryOnly)
     else:
-        saveReport(records, oPath, oFile)
+        saveReport(records, oPath, oFile, summaryOnly)
 
-    if not keepFig and not figAndText:
+    if not keepFig and not figAndText and not textOnly:
         clean(oPath)
