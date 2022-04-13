@@ -173,7 +173,7 @@ def saveFigures(records, outDir, fSize, summaryOnly):
                  range=(min(inter_packet_bagged), statistics.mean(inter_packet_bagged) * 1.5),
                  color="black")
 
-        plt.savefig(f"{outDir}{figPath}{r.type}{r.no}_InterArrival")
+        plt.savefig(f"{outDir}{figPath}{r.type}{vn}_InterArrival")
         plt.clf()
         plt.close("all")
         print(f"Printing histograms: {int(100*(rec_vls.index(vn)+1)/len(rec_vls))}%")
