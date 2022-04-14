@@ -183,51 +183,51 @@ def saveFigures(records, outDir, fSize, summaryOnly):
     if not summaryOnly:
         # for all records
         for r in records:
+            if "Dropped" not in r.name and "TrafficSource" not in r.name:
+                # create a 2D line plot
+                plt.figure(figsize=(fSize, fSize))
+                plt.suptitle(f"{r.name} for {r.type}{r.no}", y=0.05)
 
-            # create a 2D line plot
-            plt.figure(figsize=(fSize, fSize))
-            plt.suptitle(f"{r.name} for {r.type}{r.no}", y=0.05)
-
-            # make 3 row plot for different zoom levels
-            plt.subplot(3, 1, 1)
-            plt.grid(True)
-            plt.xlabel("Time (ms)")
-            plt.ylabel("Time (s)" if not "QueueLength" in r.name else "Queue Length")
-            xdat = [xd for xd in r.time if xd < time_range_small]  # select the data for max zoom level
-            ydat = r.data[:len(xdat)]
-            plt.plot([1000 * x for x in xdat], ydat,
-                     color="black",
-                     linestyle="solid",
-                     linewidth=1,
-                     marker=".",
-                     markersize=10)
-            plt.subplot(3, 1, 2)
-            plt.grid(True)
-            plt.xlabel("Time (ms)")
-            plt.ylabel("Time (s)" if not "QueueLength" in r.name else "Queue Length")
-            xdat = [xd for xd in r.time if xd < time_range_medium]  # select the data for medium zoom level
-            ydat = r.data[:len(xdat)]
-            plt.plot([1000 * x for x in xdat], ydat,
-                     color="black",
-                     linestyle="solid",
-                     linewidth=1,
-                     marker=".",
-                     markersize=5)
-            plt.subplot(3, 1, 3)
-            plt.grid(True)
-            plt.xlabel("Time (s)")
-            plt.ylabel("Time (s)" if not "QueueLength" in r.name else "Queue Length")
-            plt.plot(r.time, r.data,  # plot the whole data
-                     color="black",
-                     linestyle="solid",
-                     linewidth=1,
-                     marker=".",
-                     markersize=2)
-            plt.savefig(f"{outDir}{figPath}{r.type}{r.no}_{r.name}")
-            plt.clf()
-            plt.close("all")
-            print(f"Printing individual figures: {int(100*(records.index(r)+1)/len(records))}%")
-            gc.collect()
+                # make 3 row plot for different zoom levels
+                plt.subplot(3, 1, 1)
+                plt.grid(True)
+                plt.xlabel("Time (ms)")
+                plt.ylabel("Time (s)" if not "QueueLength" in r.name else "Queue Length")
+                xdat = [xd for xd in r.time if xd < time_range_small]  # select the data for max zoom level
+                ydat = r.data[:len(xdat)]
+                plt.plot([1000 * x for x in xdat], ydat,
+                         color="black",
+                         linestyle="solid",
+                         linewidth=1,
+                         marker=".",
+                         markersize=10)
+                plt.subplot(3, 1, 2)
+                plt.grid(True)
+                plt.xlabel("Time (ms)")
+                plt.ylabel("Time (s)" if not "QueueLength" in r.name else "Queue Length")
+                xdat = [xd for xd in r.time if xd < time_range_medium]  # select the data for medium zoom level
+                ydat = r.data[:len(xdat)]
+                plt.plot([1000 * x for x in xdat], ydat,
+                         color="black",
+                         linestyle="solid",
+                         linewidth=1,
+                         marker=".",
+                         markersize=5)
+                plt.subplot(3, 1, 3)
+                plt.grid(True)
+                plt.xlabel("Time (s)")
+                plt.ylabel("Time (s)" if not "QueueLength" in r.name else "Queue Length")
+                plt.plot(r.time, r.data,  # plot the whole data
+                         color="black",
+                         linestyle="solid",
+                         linewidth=1,
+                         marker=".",
+                         markersize=2)
+                plt.savefig(f"{outDir}{figPath}{r.type}{r.no}_{r.name}")
+                plt.clf()
+                plt.close("all")
+                print(f"Printing individual figures: {int(100*(records.index(r)+1)/len(records))}%")
+                gc.collect()
 
     # Combined figures ########################################################
     rec_names = list(set([x.name for x in records]))
