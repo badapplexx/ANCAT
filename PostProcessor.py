@@ -30,12 +30,11 @@ class Record:
         self.name = ""
         self.type = ""
         self.no = -1
-        self.count = 0
         self.time = []
         self.data = []
 
     def __str__(self):
-        return f"{self.index}: name={self.name} {self.type}{self.no}, count={len(self.data)}, block={self.block}"
+        return f"{self.index}: name={self.name} {self.type}{self.no}, count={self.getCount()}, block={self.block}"
 
     def addDataPoint(self, t, d):
         self.time.append(float(t))
@@ -43,6 +42,9 @@ class Record:
 
     def getData(self):
         return self.data
+
+    def getCount(self):
+        return len(self.data)
 
     def getMax(self):
         return max(self.data)
@@ -60,10 +62,10 @@ class Record:
         return statistics.variance(self.data)
 
     def getConfidence95(self):
-        return 100*(self.getStdDev()*tg_95) / (self.getMean()*math.sqrt(self.count))
+        return 100*(self.getStdDev()*tg_95) / (self.getMean()*math.sqrt(self.getCount()))
 
     def getConfidence99(self):
-        return 100*(self.getStdDev()*tg_99) / (self.getMean()*math.sqrt(self.count))
+        return 100*(self.getStdDev()*tg_99) / (self.getMean()*math.sqrt(self.getCount()))
 
 
 def getData(path):
@@ -87,7 +89,6 @@ def getData(path):
             for i in range(dataCount):
                 records[i].index = int(vector_lines_splitted[i][1])  # index number of record given by omnetpp
                 records[i].block = vector_lines_splitted[i][2]  # in which block of simulation record is created
-                records[i].count = int(data_lines_splitted[i][7])  # how many data points are there
                 name_splitted = vector_lines_splitted[i][3].split("_")
                 records[i].name = name_splitted[0]
                 for c in name_splitted[1]:
@@ -349,7 +350,7 @@ class Report(Canvas):
         self.add_line_v2(f"    Maximum", r.getMax())
         self.add_line_v2(f"    Minimum", r.getMin())
         self.add_line_v2(f"    Mean", r.getMean())
-        if 0 != r.getMean() and r.count >= 2:
+        if 0 != r.getMean() and r.getCount() >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
             self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
         self.insertImage(s)
@@ -359,7 +360,7 @@ class Report(Canvas):
         self.add_line(f"{s}:")
         self.add_line_v2(f"    Maximum", r.getMax())
         self.add_line_v2(f"    Mean", r.getMean())
-        if 0 != r.getMean() and r.count >= 2:
+        if 0 != r.getMean() and r.getCount() >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
         gc.collect()
 
@@ -394,13 +395,12 @@ def saveReport(records, outDir, filename, summaryOnly):
     for r in records:  # count all Dropped frames
         if "Dropped" in r.name:
             droppedSum.data += r.data
-            droppedSum.count += int(r.count)
     for rcc in records:
         if "ESBag" in rcc.name:  # use ESBag records to count all frames in the simulation
-            total_packets += rcc.count
+            total_packets += rcc.getCount()
     report.add_line_v2(f"Overall Total Frame Count", total_packets)
-    report.add_line_v2(f"Overall Dropped Frame Count", droppedSum.count)
-    report.add_line_v2(f"Overall Dropped Frame Percentage", droppedSum.count/total_packets)
+    report.add_line_v2(f"Overall Dropped Frame Count", droppedSum.getCount())
+    report.add_line_v2(f"Overall Dropped Frame Percentage", droppedSum.getCount()/total_packets)
 
     # insert summary text
     for nm in rec_names:  # for all names in records
@@ -408,7 +408,6 @@ def saveReport(records, outDir, filename, summaryOnly):
         for r in records:
             if nm == r.name:  # find records with that name
                 nsum.data += r.data  # and create a sum of that data
-                nsum.count += int(r.count)
         if "Dropped" not in nm and "TrafficSource" not in nm:
             report.insertTextRecord(nsum, f"Overall {nm}")
 
@@ -418,7 +417,6 @@ def saveReport(records, outDir, filename, summaryOnly):
         for r in records:
             if nm == r.name:  # find records with that name
                 nsum.data += r.data  # and create a sum of that data
-                nsum.count += int(r.count)
         if "Dropped" not in nm and "TrafficSource" not in nm:
             report.pageBreak()
             report.add_line(f"     Overall {nm}")
@@ -460,10 +458,10 @@ def saveReport(records, outDir, filename, summaryOnly):
             dropped_packets = 0
             for r in rec_type_vl:
                 if nv == r.no and "ESBag" in r.name:  # count frames for that VL over ESBagLatency records
-                    total_packets = r.count
+                    total_packets = r.getCount()
             for r in rec_type_vl:
                 if nv == r.no and "Dropped" in r.name:
-                    dropped_packets = r.count
+                    dropped_packets = r.getCount()
             report.add_line_v2(f"Total Frame Count", total_packets)
             report.add_line_v2(f"Dropped Frame Count", dropped_packets)
             report.add_line_v2(f"Dropped Frame Percentage", dropped_packets / total_packets if 0 != total_packets else 0)
@@ -491,7 +489,7 @@ def printTextRecord(r, s):
     print(f"    {s}:")
     print(f"        Maximum            : {r.getMax():.6f}")
     print(f"        Mean               : {r.getMean():.6f}")
-    if 0 != r.getMean() and r.count >= 2:
+    if 0 != r.getMean() and r.getCount() >= 2:
         print(f"        Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
     gc.collect()
 
@@ -518,7 +516,6 @@ def printStatistics(records, summaryOnly):
         for r in records:
             if nm == r.name:
                 nsum.data += r.data
-                nsum.count += int(r.count)
         printTextRecord(nsum, f"Overall {nm}")
 
     # insert summary figures
@@ -527,7 +524,6 @@ def printStatistics(records, summaryOnly):
         for r in records:
             if nm == r.name:
                 nsum.data += r.data
-                nsum.count += int(r.count)
         printTextRecord(nsum, f"Combined_{nm}")
 
     # per Switch statistics section(s) ########################################
