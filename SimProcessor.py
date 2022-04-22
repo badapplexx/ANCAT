@@ -3,9 +3,7 @@ import subprocess
 
 if __name__ == "__main__":
 
-    myParser = argparse.ArgumentParser(
-        description="Creates a pdf report from the simulation result files."
-                    "Please specify the results file's location. Otherwise current directory will be searched.")
+    myParser = argparse.ArgumentParser(description="Runs AFDX simulation")
 
     # Add the arguments
     myParser.add_argument('-omnetPath',

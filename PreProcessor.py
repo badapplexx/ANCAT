@@ -52,8 +52,8 @@ else:
     else:
         simulationDirectory = o
 
-    if '\\' != simulationDirectory[len(simulationDirectory)-1]:
-        simulationDirectory += "\\"
+    if '/' != simulationDirectory[len(simulationDirectory)-1]:
+        simulationDirectory += "/"
     print(f">> output directory: {simulationDirectory} \n")
 
 
@@ -63,7 +63,7 @@ else:
 # Get: numberOfES, numberOfSW, entryList, exitsList values
 
 # CONSTANTS AND SETTINGS
-iniFileName = "AutoNetwork.ini"
+iniFileName = "afdx.AutoNetwork.ini"
 sheet1Name = "Topology"
 sheet1_column1Name = "End1"
 sheet1_column2Name = "End2"

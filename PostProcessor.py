@@ -20,7 +20,7 @@ tg_99 = 2.58
 # globals
 report_now = datetime.now()
 report_now_tag = f"{report_now.strftime('%Y%m%d%H%M')}"
-figPath = f"ANCAT_figures_{report_now_tag}\\"
+figPath = f"ANCAT_figures_{report_now_tag}/"
 
 
 class Record:
@@ -600,22 +600,22 @@ if __name__ == "__main__":
     summaryOnly = args.summaryOnly
 
     if iPath is None:
-        iPath = ".\\"
+        iPath = "./"
         print(f"Using current directory for simulation data.")
     else:
-        if not iPath.endswith("\\"):
-            iPath += "\\"
+        if not iPath.endswith("/"):
+            iPath += "/"
         print(f"Using '{iPath}' for simulation data.")
     if oPath is None:
-        oPath = ".\\"
+        oPath = "./"
         print("Using current directory for outputs.")
     else:
         if oPath == "same":
             oPath = iPath
             print("Using input directory for outputs.")
         else:
-            if not oPath.endswith("\\"):
-                oPath += "\\"
+            if not oPath.endswith("/"):
+                oPath += "/"
             print(f"Using '{oPath}' for outputs.")
     if oFile is not None:
         figPath = f"{oFile}_{figPath}"
