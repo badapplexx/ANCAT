@@ -63,10 +63,11 @@ else:
 # Get: numberOfES, numberOfSW, entryList, exitsList values
 
 # CONSTANTS AND SETTINGS
-iniFileName = "afdx.AutoNetwork.ini"
+iniFileName = "AutoNetwork.ini"
 sheet1Name = "Topology"
 sheet1_column1Name = "End1"
 sheet1_column2Name = "End2"
+sheet1_column3Name = "Cable length"
 sheet2Name = "Settings"
 sheet2_column1Name = "Setting"
 sheet2_column2Name = "Value"
@@ -75,13 +76,13 @@ sheet3_column1Name = "Source ES"
 
 endSystemIndicator = "ES"
 switchIndicator = "SW"
-networkName = "AutoNetwork"
+networkName = "afdx.AutoNetwork"
 
 # SOME DECLARATIONS
 # iniString1Header = ""
 # iniString2GenNetworkParams = ""
 iniString3Conndef = ""
-iniString4EthernetSettings = ""
+iniString4EthernetSpeed = ""
 iniString5ESGeneral_numberOfs = ""
 iniString6ESGeneral_TechDelays = ""
 iniString7ESGeneral_skewMax = ""
@@ -95,6 +96,7 @@ class ConnectionNode:
             if c.isdigit():
                 self.id = int(s[s.index(c):])
                 self.is_es = True if endSystemIndicator in s else False
+                self.cableLength = "0m"
                 break
 
     def __str__(self):
@@ -140,6 +142,7 @@ with pd.ExcelFile(inputDirectory) as file:
 # TOPOLOGY
 entryList = sheet1[sheet1_column1Name].values.tolist()
 exitsList = sheet1[sheet1_column2Name].values.tolist()
+cableLengthList = sheet1[sheet1_column3Name].values.tolist()
 
 ## SETTINGS
 settingNamesList = sheet2[sheet2_column1Name].values.tolist()
@@ -150,7 +153,7 @@ switchTechDelay = settingValuesList[settingNamesList.index("Switch Tech Delay")]
 ESRxTechDelay = settingValuesList[settingNamesList.index("ES Rx Tech Delay")]
 ESTxTechDelay = settingValuesList[settingNamesList.index("ES Tx Tech Delay")]
 ethernetSpeed = settingValuesList[settingNamesList.index("Ethernet Speed")]
-ethernetCableLength = settingValuesList[settingNamesList.index("Ethernet Cable Length")]
+#ethernetCableLength = settingValuesList[settingNamesList.index("Ethernet Cable Length")]
 skewMax = settingValuesList[settingNamesList.index("Skew Max")]
 vlQueueLength = settingValuesList[settingNamesList.index("VL Queue size")]
 
@@ -186,29 +189,31 @@ connList = []
 ESSet = set()
 SWSet = set()
 for e in range(len(entryList)):
-    n1 = ConnectionNode(entryList[e])
-    n2 = ConnectionNode(exitsList[e])
-    connGraph.add_edge(n1, n2, 1)
-    connGraph.add_edge(n2, n1, 1)
-    ESSet.add(n1) if n1.is_es else SWSet.add(n1)
-    ESSet.add(n2) if n2.is_es else SWSet.add(n2)
-    connList.append([n1, n2])
+    entryNode = ConnectionNode(entryList[e])
+    exitNode = ConnectionNode(exitsList[e])
+    connGraph.add_edge(entryNode, exitNode, 1)
+    connGraph.add_edge(exitNode, entryNode, 1)
+    ESSet.add(entryNode) if entryNode.is_es else SWSet.add(entryNode)
+    ESSet.add(exitNode) if exitNode.is_es else SWSet.add(exitNode)
+    connList.append([entryNode, exitNode, cableLengthList[e]])
 
-entryIDs = ""
-exitIDs = ""
-isEntryES = ""
-isExitES = ""
+stringEntryIDs = ""
+stringExitIDs = ""
+stringIsEntryES = ""
+stringIsExitES = ""
+stringCableLength = ""
 i = 0
 for cit in connList:
-    entryIDs += f"*.connDef[{i}].entryIndex = {cit[0].id}\n"
-    exitIDs += f"*.connDef[{i}].exitIndex = {cit[1].id}\n"
-    isEntryES += "*.connDef[{}].isEntryAnEndsystem = {}\n".format(i, "true" if cit[0].is_es else "false")
-    isExitES += "*.connDef[{}].isExitAnEndsystem = {}\n".format(i, "true" if cit[1].is_es else "false")
+    stringEntryIDs += f"*.connDef[{i}].entryIndex = {cit[0].id}\n"
+    stringExitIDs += f"*.connDef[{i}].exitIndex = {cit[1].id}\n"
+    stringIsEntryES += "*.connDef[{}].isEntryAnEndsystem = {}\n".format(i, "true" if cit[0].is_es else "false")
+    stringIsExitES += "*.connDef[{}].isExitAnEndsystem = {}\n".format(i, "true" if cit[1].is_es else "false")
+    stringCableLength += f"*.connDef[{i}].cableLength = {cit[2]}\n"
     i += 1
 
-iniString3Conndef = entryIDs + "\n" + exitIDs + "\n" + isEntryES + "\n" + isExitES
+iniString3Conndef = stringEntryIDs + "\n" + stringExitIDs + "\n" + stringIsEntryES + "\n" + stringIsExitES + "\n" + stringCableLength
 # ==========================================
-iniString4EthernetSettings = f"*.ethSpeed = {ethernetSpeed}\n*.cableLength = {ethernetCableLength}"
+iniString4EthernetSpeed = f"*.ethSpeed = {ethernetSpeed}\n"
 iniString5ESGeneral_numberOfs = f"**.numberOfEndSystems = {len(ESSet)}\n" \
                                 f"**.numberOfSwitches = {len(SWSet)}"
 iniString6ESGeneral_TechDelays = f"**.scheduler.serviceTime = {switchSchServiceTime}\n" \
@@ -291,7 +296,7 @@ iniFile = open(simulationDirectory + iniFileName, 'w')
 iniFile.write(iniString1Header + "\n\n")
 iniFile.write(iniString2GenNetworkParams + "\n\n")
 iniFile.write(iniString3Conndef + "\n\n")
-iniFile.write(iniString4EthernetSettings + "\n\n")
+iniFile.write(iniString4EthernetSpeed + "\n\n")
 iniFile.write(iniString5ESGeneral_numberOfs + "\n")
 iniFile.write(iniString7ESGeneral_skewMax + "\n")
 iniFile.write(iniString8ESGeneralVLQueueLength + "\n")
