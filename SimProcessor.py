@@ -1,5 +1,7 @@
 import argparse
 import subprocess
+import psutil
+import time
 
 if __name__ == "__main__":
 
@@ -65,3 +67,16 @@ if __name__ == "__main__":
 
     # call simulation
     subprocess.call(mingw_ancat_filename)
+
+    running = True
+    print("Waiting for 'mintty' to finish ", end = "", flush = True)
+    while running:
+        time.sleep(1)
+        print(".", end = "", flush = True)
+        running = False
+        for proc in psutil.process_iter():
+            if "mintty" in proc.name():
+                running = True
+                break
+    print("")
+    print("'mintty' finished")
