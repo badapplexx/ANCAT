@@ -23,12 +23,10 @@ if __name__ == "__main__":
     omnetpp_path = args.omnetPath
     afdx_model_path = args.afdxPath
 
-    omnetpp_path = "C:\\omnetpp-5.7"
     mingw_filename = omnetpp_path+"\\mingwenv.cmd"
     mingw_ancat_filename = omnetpp_path+"\\mingwenv_ancat.cmd"
     mingw_ancat_command_line = 'call "%HOME%\\tools\\win64\\msys2_shell.cmd" -mingw64'
 
-    afdx_model_path = "C:\\omnetpp-5.7\\samples\\AFDX-Master-git"
     sim_exe_path = afdx_model_path + "\\src"
     sim_exe_name = "AFDX-Master-git.exe"
     sim_ini_path = afdx_model_path + "\\simulations"
