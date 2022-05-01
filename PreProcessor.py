@@ -158,7 +158,7 @@ skewMax = settingValuesList[settingNamesList.index("Skew Max")]
 vlQueueLength = settingValuesList[settingNamesList.index("VL Queue size")]
 
 # Parameters to be filled with default values
-switchSchServiceTime = "0"
+switchSchServiceTime = "0s"
 def_isSkewMaxTestEnabled = "false"
 def_networkID = "0x99"
 def_equipmentID = "0x66"
@@ -179,7 +179,11 @@ UniqEndSystemNameList = pd.unique((sheet3[sheet3_column1Name].values.tolist())[0
 ############################# PART2 #############################
 ##################### CREATE and FILL *.ini #####################
 ### Header ###
-iniString1Header = "[General]\n" "**.vector-recording = true\n" "**.scalar-recording = true"
+iniString1Header = "[General]\n" +\
+                   "**.vector-recording = true\n" + \
+                   "**.scalar-recording = true\n" + \
+                   "**.queueLength.statistic-recording = false\n" + \
+                   "**.lifeTime.statistic-recording = false\n"
 
 ### Network Parameters ###
 iniString2GenNetworkParams = "#Network Params\n"  f"network = {networkName}"
