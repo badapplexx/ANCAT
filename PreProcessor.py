@@ -180,6 +180,7 @@ UniqEndSystemNameList = pd.unique((sheet3[sheet3_column1Name].values.tolist())[0
 ##################### CREATE and FILL *.ini #####################
 ### Header ###
 iniString1Header = "[General]\n" +\
+                   "print-undisposed = false\n" + \
                    "**.vector-recording = true\n" + \
                    "**.scalar-recording = true\n" + \
                    "**.queueLength.statistic-recording = false\n" + \
