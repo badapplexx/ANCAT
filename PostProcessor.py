@@ -78,7 +78,7 @@ def getData(path):
             filesFound_vci = True
             file_vci = open(os.path.join(path, file))
             lines_vci = file_vci.readlines()
-            vector_lines = [x for x in lines_vci if "vector" in x]  # get all lines including "vector"
+            vector_lines = [x for x in lines_vci if "vector " in x]  # get all lines including "vector"
             vector_lines_splitted = list(map(str.split, vector_lines))
             dataCount = len(vector_lines_splitted)
             data_lines = lines_vci[-dataCount - 1:]
