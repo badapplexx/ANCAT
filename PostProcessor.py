@@ -34,7 +34,7 @@ class Record:
         self.data = []
 
     def __str__(self):
-        return f"{self.index}: name={self.name} {self.type}{self.no}, count={self.getCount()}, block={self.block}"
+        return f"{self.index}: name={self.name} {self.type}{self.no}, count={self.getCount()}, block={self.block}, mean={self.getMean()}"
 
     def addDataPoint(self, t, d):
         self.time.append(float(t))
@@ -53,7 +53,23 @@ class Record:
         return min(self.data)
 
     def getMean(self):
-        return statistics.mean(self.data)
+        if "QueueLength" in self.name:
+            total_weight = 0
+            for i in range(1, self.getCount()):
+                val_mean = (self.data[i] + self.data[i - 1]) / 2
+                diff_in_time = self.time[i] - self.time[i - 1]
+                total_weight += val_mean * diff_in_time
+            mymean = total_weight / self.time[-1]
+        else:
+            mymean = statistics.mean(self.data)
+        return mymean
+
+    def getMeanText(self):
+        if "QueueLength" in self.name:
+            ret = "weighted mean"
+        else:
+            ret = "mean"
+        return ret
 
     def getStdDev(self):
         return statistics.stdev(self.data)
@@ -349,7 +365,7 @@ class Report(Canvas):
     def insertRecord(self, r, s):
         self.add_line_v2(f"    Maximum", r.getMax())
         self.add_line_v2(f"    Minimum", r.getMin())
-        self.add_line_v2(f"    Mean", r.getMean())
+        self.add_line_v2(f"    {r.getMeanText().title()}", r.getMean())
         if 0 != r.getMean() and r.getCount() >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
             self.add_line(f"    Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
@@ -359,7 +375,7 @@ class Report(Canvas):
     def insertTextRecord(self, r, s):
         self.add_line(f"{s}:")
         self.add_line_v2(f"    Maximum", r.getMax())
-        self.add_line_v2(f"    Mean", r.getMean())
+        self.add_line_v2(f"    {r.getMeanText().title()}", r.getMean())
         if 0 != r.getMean() and r.getCount() >= 2:
             self.add_line(f"    Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
         gc.collect()
@@ -392,31 +408,38 @@ def saveReport(records, outDir, filename, summaryOnly):
     # Dropped frames
     droppedSum = Record()
     total_packets = 0
+    total_time = 0
     for r in records:  # count all Dropped frames
         if "Dropped" in r.name:
             droppedSum.data += r.data
     for rcc in records:
         if "ESBag" in rcc.name:  # use ESBag records to count all frames in the simulation
             total_packets += rcc.getCount()
-    report.add_line_v2(f"Overall Total Frame Count", total_packets)
+            total_time = max(total_time, rcc.time[-1])
+    report.add_line_v2(f"Overall Frame Count", total_packets)
+    report.add_line_v2(f"Overall Simulation Time", total_time)
     report.add_line_v2(f"Overall Dropped Frame Count", droppedSum.getCount())
     report.add_line_v2(f"Overall Dropped Frame Percentage", droppedSum.getCount()/total_packets)
 
     # insert summary text
     for nm in rec_names:  # for all names in records
         nsum = Record()
+        nsum.name = f"Overall{nm}"
         for r in records:
             if nm == r.name:  # find records with that name
                 nsum.data += r.data  # and create a sum of that data
+                nsum.time += r.time
         if "Dropped" not in nm and "TrafficSource" not in nm:
             report.insertTextRecord(nsum, f"Overall {nm}")
 
     # insert summary figures
     for nm in rec_names:  # for all names in records
         nsum = Record()
+        nsum.name = f"Overall{nm}"
         for r in records:
             if nm == r.name:  # find records with that name
                 nsum.data += r.data  # and create a sum of that data
+                nsum.time += r.time
         if "Dropped" not in nm and "TrafficSource" not in nm:
             report.pageBreak()
             report.add_line(f"     Overall {nm}")
@@ -488,7 +511,7 @@ def saveReport(records, outDir, filename, summaryOnly):
 def printTextRecord(r, s):
     print(f"    {s}:")
     print(f"        Maximum            : {r.getMax():.6f}")
-    print(f"        Mean               : {r.getMean():.6f}")
+    print(f"        {r.getMeanText().title()}               : {r.getMean():.6f}")
     if 0 != r.getMean() and r.getCount() >= 2:
         print(f"        Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
     gc.collect()
@@ -513,17 +536,21 @@ def printStatistics(records, summaryOnly):
     # insert summary text
     for nm in rec_names:
         nsum = Record()
+        nsum.name = f"Overall{nm}"
         for r in records:
             if nm == r.name:
                 nsum.data += r.data
+                nsum.time += r.time
         printTextRecord(nsum, f"Overall {nm}")
 
     # insert summary figures
     for nm in rec_names:
         nsum = Record()
+        nsum.name = f"Overall{nm}"
         for r in records:
             if nm == r.name:
                 nsum.data += r.data
+                nsum.time += r.time
         printTextRecord(nsum, f"Combined_{nm}")
 
     # per Switch statistics section(s) ########################################
