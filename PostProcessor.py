@@ -557,10 +557,15 @@ def saveReport():
 
 def printTextRecord(r, s):
     print(f"    {s}:")
+    print(f"        Data count         : {r.getCount()}")
+    print(f"        Final time         : {r.time[-1]}")
     print(f"        Maximum            : {r.getMax():.6f}")
-    print(f"        {r.getMeanText().title()}               : {r.getMean():.6f}")
+    print(f"        Minimum            : {r.getMin():.6f}")
     if 0 != r.getMean() and r.getCount() >= 2:
-        print(f"        Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
+        print(f"        {r.getMeanText().title():<19}: {r.getMean()}")
+        if "QueueLength" not in r.name:
+            print(f"        Simulation mean is in {r.getConfidence95():.1f}% band of true mean with 95% confidence")
+            print(f"        Simulation mean is in {r.getConfidence99():.1f}% band of true mean with 99% confidence")
     gc.collect()
 
 
@@ -571,7 +576,7 @@ def printStatistics():
 
     # insert summary text
     for orec in overall_records:
-        printTextRecord(orec, f"{orec.name}")
+        printTextRecord(orec, f"{orec.name} for all {orec.type}")
 
     # per Switch statistics section(s) ########################################
     if not args.summaryOnly:
@@ -582,7 +587,7 @@ def printStatistics():
             for rn in rec_names:
                 for r in records_sw:
                     if rsw == r.no and rn == r.name:
-                        printTextRecord(r, f"        {r.name}")
+                        printTextRecord(r, f"        {r.name} for {r.type}{r.no}")
 
     # per VL statistics section(s) ############################################
     print("3. Per-VL Statistics")
@@ -593,7 +598,7 @@ def printStatistics():
             for rn in rec_names:
                 for r in records_vl:
                     if rvl == r.no and rn == r.name:
-                        printTextRecord(r, f"        {r.name}")
+                        printTextRecord(r, f"        {r.name} for {r.type}{r.no}")
 
     print(f"==========================================================================================")
 
