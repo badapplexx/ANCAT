@@ -323,14 +323,22 @@ for s in SWSet:
     f.write(f"*** VL ID - Ports Mapping for Switch {s.id} ***\n")
     for e in ESInfoList:
         ports = set()
+        psource = find_path(connGraph, s, e.source)
+        psource_node = psource.nodes[1]
+        for c in connList:
+            if ((c[0] == s) and (c[1] == psource_node)) or ((c[0] == psource_node) and (c[1] == s)):
+                source_index = connList.index(c)
         for d in e.destinationList:
             p = find_path(connGraph, s, d)
             first_node = p.nodes[1]
             for c in connList:
                 if ((c[0] == s) and (c[1] == first_node)) or ((c[0] == first_node) and (c[1] == s)):
-                    ports.add(connList.index(c))
+                    dest_index = connList.index(c)
+                    if source_index != dest_index:
+                        ports.add(dest_index)
                     break
-        f.write(f"{e.vlid} : {ports}\n")
+        if len(ports) != 0:
+            f.write(f"{e.vlid} : {ports}\n")
     f.close()
     print(">>" + simulationDirectory + fileName + " is created")
     iniStringConfigTable += f"*.SwitchA[{s.id}].switchFabric.router.configTableName = \"{fileName}\"\n"
