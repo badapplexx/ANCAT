@@ -7,6 +7,7 @@ import sys
 import glob
 
 # CONSTANTS AND SETTINGS
+import numpy
 
 myParser = argparse.ArgumentParser(description='Creates *.ini files and config tables for the AFDX Simulation. Please specify the input excel file. '
                                                 'Otherwise current directory will be searched for and first one found will be used.')
@@ -132,6 +133,12 @@ class MessageSet:
         self.sourceDatarate = ""
         self.sourceCableLength = ""
 
+    def __str__(self):
+        return f"\nsource:{self.source}, vlid:{self.vlid}, payload:{self.payloadLength}"
+
+    def __repr__(self):
+        return f"\nsource:{self.source}, vlid:{self.vlid}, payload:{self.payloadLength}"
+
 
 # get excel content
 with pd.ExcelFile(inputDirectory) as file:
@@ -174,7 +181,10 @@ endOfFile = sheet3[sheet3.isnull().all(axis=1) == True].index.tolist()[0]  # get
 headerList = sheet3.columns.tolist()
 
 sourceNameColumn = (sheet3[sheet3_column1Name].values.tolist())[0:endOfFile]
-UniqEndSystemNameList = pd.unique((sheet3[sheet3_column1Name].values.tolist())[0:endOfFile])
+# UniqEndSystemNameList = pd.unique((sheet3[sheet3_column1Name].values.tolist())[0:endOfFile])
+UniqEndSystemNameList1 = (pd.unique((sheet1[sheet1_column1Name].values.tolist())[0:endOfFile])).tolist()
+UniqEndSystemNameList2 = (pd.unique((sheet1[sheet1_column2Name].values.tolist())[0:endOfFile])).tolist()
+UniqEndSystemNameList = set(UniqEndSystemNameList1+ UniqEndSystemNameList2)
 
 ############################# PART2 #############################
 ##################### CREATE and FILL *.ini #####################
@@ -239,8 +249,12 @@ iniString9ESGeneral_defaults += f"**.skewMaxTester.skewMaxTestEnabled = {def_isS
 # ==========================================
 # Per end system parameters
 # message counts
-iniStringMessageCount = [" "] * len(UniqEndSystemNameList)
-for es in UniqEndSystemNameList:
+
+UniqEndSystemNameList_ES = [x for x in UniqEndSystemNameList if "ES" in x]
+UniqEndSystemNameList_ES.sort()
+
+iniStringMessageCount = [" "] * len(UniqEndSystemNameList_ES)
+for es in UniqEndSystemNameList_ES:
     ix = int(es[2:4])
     iniStringMessageCount[ix] = f"**.ESGroup[{ix}].messageCount = {sourceNameColumn.count(es)}\n"
 # ==========================================
@@ -318,6 +332,7 @@ iniFile.close()
 iniStringConfigTable = ""
 
 for s in SWSet:
+    registeredVLs = []
     fileName = f"{s}.txt"
     f = open(simulationDirectory + fileName, "w")
     f.write(f"*** VL ID - Ports Mapping for Switch {s.id} ***\n")
@@ -337,8 +352,10 @@ for s in SWSet:
                     if source_index != dest_index:
                         ports.add(dest_index)
                     break
-        if len(ports) != 0:
+        if len(ports) != 0 and e.vlid not in registeredVLs:
             f.write(f"{e.vlid} : {ports}\n")
+            registeredVLs.append(e.vlid)
+
     f.close()
     print(">>" + simulationDirectory + fileName + " is created")
     iniStringConfigTable += f"*.SwitchA[{s.id}].switchFabric.router.configTableName = \"{fileName}\"\n"
