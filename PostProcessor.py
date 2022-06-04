@@ -314,6 +314,9 @@ def saveFigures():
                 if "TrafficSource" in rec.name:
                     inter_packet_source = [rec.time[x + 1] - rec.time[x] for x in range(len(rec.time) - 1)]
 
+        if len(inter_packet_source) <= 1:
+            continue
+
         # plot histogram of these inter packet times at source and after bagging
         plt.subplot(2, 1, 1)
         plt.grid(True)
