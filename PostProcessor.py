@@ -212,7 +212,7 @@ def getData():
                     if c.isdigit():
                         ind = name_splitted[1].index(c)
                         records[i].type = name_splitted[1][:ind]   # the type of the record, i.e. VL, SW ...
-                        records[i].no = int(name_splitted[1][ind:])  # the no of the type, VL1, VL2, VL3 ...
+                        records[i].no = name_splitted[1][ind:]  # the no of the type, i.e. 2c03 in VL2c03
                         break
             print(f"{file} is processed")
 
