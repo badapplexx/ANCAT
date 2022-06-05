@@ -301,7 +301,7 @@ def saveFigures():
     time_range_medium = 0.1
 
     # Histograms ##############################################################
-
+    # Histogram for inter packet times at source and after bagging AND at destination
     for rvl in rec_vls:
         plt.figure(figsize=(fSize, fSize))
         plt.suptitle(f"Inter-arrival time histogram for VL{rvl}", y=0.05)
@@ -313,12 +313,13 @@ def saveFigures():
                     inter_packet_bagged = [rec.time[x + 1] - rec.time[x] for x in range(len(rec.time) - 1)]
                 if "TrafficSource" in rec.name:
                     inter_packet_source = [rec.time[x + 1] - rec.time[x] for x in range(len(rec.time) - 1)]
+                if "E2ELatency" in rec.name:
+                    inter_packet_destination = [rec.time[x + 1] - rec.time[x] for x in range(len(rec.time) - 1)]
 
-        if len(inter_packet_source) <= 1:
+        if len(inter_packet_destination) <= 1:
             continue
 
-        # plot histogram of these inter packet times at source and after bagging
-        plt.subplot(2, 1, 1)
+        plt.subplot(3, 1, 1)
         plt.grid(True)
         plt.title(f"At creation")
         plt.xlabel("Time (s)")
@@ -326,13 +327,21 @@ def saveFigures():
         plt.hist(inter_packet_source, 100,
                  range=(min(inter_packet_source), statistics.mean(inter_packet_source) * 1.5),
                  color="black")
-        plt.subplot(2, 1, 2)
+        plt.subplot(3, 1, 2)
         plt.grid(True)
         plt.title(f"After bagging")
         plt.xlabel("Time (s)")
         plt.ylabel("Packet count")
         plt.hist(inter_packet_bagged, 100,
                  range=(min(inter_packet_bagged), statistics.mean(inter_packet_bagged) * 1.5),
+                 color="black")
+        plt.subplot(3, 1, 3)
+        plt.grid(True)
+        plt.title(f"At destination")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Packet count")
+        plt.hist(inter_packet_destination, 100,
+                 range=(min(inter_packet_destination), statistics.mean(inter_packet_destination) * 1.5),
                  color="black")
 
         plt.savefig(f"{args.oPath}{figPath}VL{rvl}_InterArrival")
