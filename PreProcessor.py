@@ -125,9 +125,9 @@ class MessageSet:
         self.stopTime = ""
         self.BAG = ""
         self.period = ""
-        self.deltaPeriod = ""
+        #self.deltaPeriod = ""
         self.payloadLength = ""
-        self.deltaPayloadLength = ""
+        #self.deltaPayloadLength = ""
         self.rho = ""
         self.sigma = ""
         self.sourceDatarate = ""
@@ -270,13 +270,13 @@ def fillEndSystemInfo(row, column_length):
     esInfo.stopTime = str(row[5])
     esInfo.BAG = str(row[6])
     esInfo.period = str(row[7])
-    esInfo.deltaPeriod = str(row[8])
-    esInfo.payloadLength = int(row[9])
-    esInfo.deltaPayloadLength = int(row[10])
-    esInfo.rho = str(row[11])
-    esInfo.sigma = int(row[12])
-    esInfo.sourceDatarate = str(row[13])
-    esInfo.sourceCableLength = str(row[14])
+    #esInfo.deltaPeriod = str(row[8])
+    esInfo.payloadLength = int(row[8])
+   #esInfo.deltaPayloadLength = int(row[10])
+    esInfo.rho = str(row[9])
+    esInfo.sigma = int(row[10])
+    esInfo.sourceDatarate = str(row[11])
+    esInfo.sourceCableLength = str(row[12])
     return esInfo
 
 ESInfoList = []
@@ -297,12 +297,12 @@ for e in ESInfoList:
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].sigma = {e.sigma}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].BAG = {e.BAG}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].virtualLinkId = {e.vlid}\n"
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].deltaPacketLengthMaxLimit = {e.deltaPayloadLength}\n"
+    #iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].afdxMarshall[{e.trafficSourceID}].deltaPacketLengthMaxLimit = {e.deltaPayloadLength}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].partitionId = {e.partitionID}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].startTime = {e.startTime}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].stopTime = {e.stopTime}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].interArrivalTime = {e.period}\n"
-    iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].deltaInterArrivalTimeMaxLimit = {e.deltaPeriod}\n"
+    #iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].deltaInterArrivalTimeMaxLimit = {e.deltaPeriod}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].packetLength = {e.payloadLength}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].baudrate = {e.sourceDatarate}\n"
     iniStringMessageSet[rowIndex] += f"**.ESGroup[{e.source.id}].messageSource[{e.trafficSourceID}].cableLength = {e.sourceCableLength}\n"
