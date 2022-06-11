@@ -119,11 +119,15 @@ class Report(Canvas):
         return self.reportname
 
     def add_heading_lvl1(self, s):
+        self.bookmarkPage(s)
+        self.addOutlineEntry(s, s, level=0)
         self.setFont("Courier-Bold", 18)
         self.drawString(self.currentX, self.currentY, s)
         self.currentY -= 22
 
     def add_heading_lvl2(self, s):
+        self.bookmarkPage(s)
+        self.addOutlineEntry(s, s, level=1)
         self.setFont("Courier-Bold", 14)
         self.drawString(self.currentX+20, self.currentY, s)
         self.currentY -= 18
@@ -132,6 +136,8 @@ class Report(Canvas):
         self.setFont("Courier", 12)
         self.drawString(self.currentX+40, self.currentY, s)
         self.currentY -= 16
+        if self.currentY < 50:
+            self.pageBreak()
 
     def add_line_v2(self, s, d):
         self.setFont("Courier", 12)
@@ -315,33 +321,39 @@ def saveFigures():
                     inter_packet_source = [rec.time[x + 1] - rec.time[x] for x in range(len(rec.time) - 1)]
                 if "E2ELatency" in rec.name:
                     inter_packet_destination = [rec.time[x + 1] - rec.time[x] for x in range(len(rec.time) - 1)]
+                    e2e = rec.data
 
         if len(inter_packet_destination) <= 1:
             continue
 
-        plt.subplot(3, 1, 1)
+        plt.subplot(4, 1, 1)
         plt.grid(True)
-        plt.title(f"At creation")
-        plt.xlabel("Time (s)")
+        plt.title(f"At creation", y=1.0, pad=-14)
         plt.ylabel("Packet count")
-        plt.hist(inter_packet_source, 100,
+        plt.hist(inter_packet_source, 200,
                  range=(min(inter_packet_source), statistics.mean(inter_packet_source) * 1.5),
                  color="black")
-        plt.subplot(3, 1, 2)
+        plt.subplot(4, 1, 2)
         plt.grid(True)
-        plt.title(f"After bagging")
-        plt.xlabel("Time (s)")
+        plt.title(f"After bagging", y=1.0, pad=-14)
         plt.ylabel("Packet count")
-        plt.hist(inter_packet_bagged, 100,
+        plt.hist(inter_packet_bagged, 200,
                  range=(min(inter_packet_bagged), statistics.mean(inter_packet_bagged) * 1.5),
                  color="black")
-        plt.subplot(3, 1, 3)
+        plt.subplot(4, 1, 3)
         plt.grid(True)
-        plt.title(f"At destination")
+        plt.title(f"At destination", y=1.0, pad=-14)
+        plt.ylabel("Packet count")
+        plt.hist(inter_packet_destination, 200,
+                 range=(min(inter_packet_destination), statistics.mean(inter_packet_destination) * 1.5),
+                 color="black")
+        plt.subplot(4, 1, 4)
+        plt.grid(True)
+        plt.title(f"E2E Latency", y=1.0, pad=-14)
         plt.xlabel("Time (s)")
         plt.ylabel("Packet count")
-        plt.hist(inter_packet_destination, 100,
-                 range=(min(inter_packet_destination), statistics.mean(inter_packet_destination) * 1.5),
+        plt.hist(e2e, 200,
+                 range=(min(e2e), statistics.mean(e2e) * 1.5),
                  color="black")
 
         plt.savefig(f"{args.oPath}{figPath}VL{rvl}_InterArrival")
@@ -412,8 +424,8 @@ def saveFigures():
 
         # find a record with matching name to the current loop's name in all records
         for rec in records:
-            if rec.name in orec.name and orec.type == rec.type:
-                debugprint(f"processing {rec.name} for all {rec.type}{rec.no}")
+            if ("Overall" + rec.name) == orec.name and orec.type == rec.type:
+                debugprint(f"processing {rec.name}{rec.type}{rec.no} for {orec.name}{orec.type}")
 
                 # make 3 row plot for different zoom levels
                 plt.subplot(3, 1, 1)
