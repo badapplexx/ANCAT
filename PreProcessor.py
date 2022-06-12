@@ -271,7 +271,7 @@ def fillEndSystemInfo(row, column_length):
     esInfo.BAG = str(row[6])
     esInfo.period = str(row[7])
     #esInfo.deltaPeriod = str(row[8])
-    esInfo.payloadLength = int(row[8])
+    esInfo.payloadLength = str(row[8])
    #esInfo.deltaPayloadLength = int(row[10])
     esInfo.rho = str(row[9])
     esInfo.sigma = int(row[10])
