@@ -64,6 +64,9 @@ else:
 # Get: numberOfES, numberOfSW, entryList, exitsList values
 
 # CONSTANTS AND SETTINGS
+copyrightNotice = "#" + "\n" + "# Copyright (C) 2022 Ipek Gokce" + "\n" + "#" + "\n" +\
+                  "# SPDX-License-Identifier: LGPL-3.0-or-later" + "\n" + "#" + "\n" +\
+                  "# This file is created by ANCAT." + "\n" + "#" + "\n"
 iniFileName = "AutoNetwork.ini"
 sheet1Name = "Topology"
 sheet1_column1Name = "End1"
@@ -189,7 +192,8 @@ UniqEndSystemNameList = set(UniqEndSystemNameList1+ UniqEndSystemNameList2)
 ############################# PART2 #############################
 ##################### CREATE and FILL *.ini #####################
 ### Header ###
-iniString1Header = "[General]\n" +\
+iniString1Header = copyrightNotice + \
+                   "[General]\n" +\
                    "print-undisposed = false\n" + \
                    "**.vector-recording = true\n" + \
                    "**.scalar-recording = true\n" + \
@@ -271,7 +275,7 @@ def fillEndSystemInfo(row, column_length):
     esInfo.BAG = str(row[6])
     esInfo.period = str(row[7])
     #esInfo.deltaPeriod = str(row[8])
-    esInfo.payloadLength = str(int(row[8]))
+    esInfo.payloadLength = str((row[8]))
    #esInfo.deltaPayloadLength = int(row[10])
     esInfo.rho = str(row[9])
     esInfo.sigma = int(row[10])
