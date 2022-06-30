@@ -145,9 +145,9 @@ class MessageSet:
 
 # get excel content
 with pd.ExcelFile(inputDirectory) as file:
-    sheet1 = pd.read_excel(file, sheet1Name)
-    sheet2 = pd.read_excel(file, sheet2Name)
-    sheet3 = pd.read_excel(file, sheet3Name)
+    sheet1 = pd.read_excel(file, sheet1Name, dtype=str)
+    sheet2 = pd.read_excel(file, sheet2Name, dtype=str)
+    sheet3 = pd.read_excel(file, sheet3Name, dtype=str)
 
 # TOPOLOGY
 entryList = sheet1[sheet1_column1Name].values.tolist()
@@ -269,7 +269,7 @@ for es in UniqEndSystemNameList_ES:
 def fillEndSystemInfo(row, column_length):
     esInfo = MessageSet(row[0], row[1])
     esInfo.vlid = str(row[2])
-    esInfo.partitionID = int(row[3])
+    esInfo.partitionID = str(row[3])
     esInfo.startTime = str(row[4])
     esInfo.stopTime = str(row[5])
     esInfo.BAG = str(row[6])
@@ -278,7 +278,7 @@ def fillEndSystemInfo(row, column_length):
     esInfo.payloadLength = str((row[8]))
    #esInfo.deltaPayloadLength = int(row[10])
     esInfo.rho = str(row[9])
-    esInfo.sigma = int(row[10])
+    esInfo.sigma = str(row[10])
     esInfo.sourceDatarate = str(row[11])
     esInfo.sourceCableLength = str(row[12])
     return esInfo
