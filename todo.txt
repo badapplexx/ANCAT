@@ -1,0 +1,2 @@
+Add try catch
+Separate postProcessor into two -> figure generator + report creator 
