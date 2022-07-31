@@ -43,7 +43,7 @@ class Record:
 
     def __str__(self):
         return f"{self.index:<3}: name={self.name:<30} {self.type:<3}{self.no:<6}, " \
-               f"count={self.getCount()::<5}, {self.getMeanText():<15}={self.getMean():<25}"
+               f"count={self.getCount():<5}, {self.getMeanText():<15}={self.getMean():<25}"
 
     def addDataPoint(self, t, d):
         self.time.append(float(t))
@@ -133,13 +133,15 @@ class Report(Canvas):
         self.currentY -= 18
 
     def add_line(self, s):
+        if self.currentY < 50:
+            self.pageBreak()
         self.setFont("Courier", 12)
         self.drawString(self.currentX+40, self.currentY, s)
         self.currentY -= 16
-        if self.currentY < 50:
-            self.pageBreak()
 
     def add_line_v2(self, s, d):
+        if self.currentY < 50:
+            self.pageBreak()
         self.setFont("Courier", 12)
         self.drawString(self.currentX+40, self.currentY, s)
         self.drawString(self.currentX+270, self.currentY, ": ")
@@ -178,6 +180,8 @@ class Report(Canvas):
         gc.collect()
 
     def insertImage(self, s):
+        if self.currentY < 650:
+            self.pageBreak()
         self.drawImage(s, x=0, y=-180, width=600, preserveAspectRatio=True)
         self.currentY -= 750
         gc.collect()
@@ -215,11 +219,12 @@ def getData():
                 name_splitted = vector_lines_splitted[i][3].split("_")
                 records[i].name = name_splitted[0]
                 for c in name_splitted[1]:
-                    if c.isdigit():
-                        ind = name_splitted[1].index(c)
-                        records[i].type = name_splitted[1][:ind]   # the type of the record, i.e. VL, SW ...
-                        records[i].no = name_splitted[1][ind:]  # the no of the type, i.e. 2c03 in VL2c03
+                    if "VL" in name_splitted[1] or "SW" in name_splitted[1]:
+                        records[i].type = name_splitted[1][:2]   # the type of the record, i.e. VL, SW ...
+                        records[i].no = name_splitted[1][2:]  # the no of the type, i.e. 2c03 in VL2c03
                         break
+                    else:
+                        print("UNKNOWN RECORD TYPE, PLEASE FIX ANCAT TO INCLUDE THIS RECORD TYPE!")
             print(f"{file} is processed")
 
     # vec file operations, in this line, vci file should already be parsed
@@ -308,6 +313,7 @@ def saveFigures():
 
     # Histograms ##############################################################
     # Histogram for inter packet times at source and after bagging AND at destination
+    counter = 0
     for rvl in rec_vls:
         plt.figure(figsize=(fSize, fSize))
         plt.suptitle(f"Inter-arrival time histogram for VL{rvl}", y=0.05)
@@ -360,8 +366,67 @@ def saveFigures():
         plt.clf()
         plt.close("all")
         debugprint(f"  {args.oPath}{figPath}VL{rvl}_InterArrival")
-        print(f"Printing histograms: {int(100*(rec_vls.index(rvl)+1)/len(rec_vls))}%")
+        counter = counter + 1
+        print(f"Printing histograms (1/3) -{counter}- ... ")
         gc.collect()
+
+    # Histogram of E2ELatency Per destination end system per vl
+    counter = 0
+    for rec in records:
+        if "VL" == rec.type:
+            if "LatencyAt" in rec.name:
+                plt.figure(figsize=(fSize, fSize))
+                plt.suptitle(f"Histogram of {rec.name} for VL{rec.no}", y=0.05)
+                debugprint(f"Histogram print for {rec.name} for VL{rec.no}")
+                # search in records having no == vn
+
+                if len(rec.data) <= 1:
+                    continue
+
+                plt.grid(True)
+                plt.title(f"E2ELatency Per Destination ES", y=1.0, pad=-14)
+                plt.xlabel("Time (s)")
+                plt.ylabel("Packet count")
+                plt.hist(rec.data, 200,
+                         range=(min(rec.data), statistics.mean(rec.data) * 1.5),
+                         color="black")
+
+                plt.savefig(f"{args.oPath}{figPath}Histogram_{rec.name}VL{rec.no}")
+                plt.clf()
+                plt.close("all")
+                debugprint(f"  {args.oPath}{figPath}Histogram_{rec.name}VL{rec.no}")
+                counter = counter + 1
+                print(f"Printing histograms (2/3) -{counter}- ... ")
+                gc.collect()
+
+    # Histogram of SWQueueingTime Per port per SW
+    counter = 0
+    for rec in records:
+        if "SW" == rec.type:
+            if "SWQueueingTime#Port" in rec.name:
+                plt.figure(figsize=(fSize, fSize))
+                plt.suptitle(f"Histogram of {rec.name} for SW{rec.no}", y=0.05)
+                debugprint(f"Histogram print for {rec.name} for VL{rec.no}")
+                # search in records having no == vn
+
+                if len(rec.data) <= 1:
+                    continue
+
+                plt.grid(True)
+                plt.title(f"Queuing Time Per Switch and Port", y=1.0, pad=-14)
+                plt.xlabel("Time (s)")
+                plt.ylabel("Time (s)")
+                plt.hist(rec.data, #200,
+                         # range=(min(rec.data), statistics.mean(rec.data) * 1.5),
+                         color="black")
+
+                plt.savefig(f"{args.oPath}{figPath}Histogram_{rec.name}SW{rec.no}")
+                plt.clf()
+                plt.close("all")
+                debugprint(f"  {args.oPath}{figPath}Histogram_{rec.name}SW{rec.no}")
+                counter = counter + 1
+                print(f"Printing histograms (3/3) -{counter}- ... ")
+                gc.collect()
 
     # Individual figures ######################################################
     if not args.summaryOnly:
@@ -410,7 +475,7 @@ def saveFigures():
                 plt.savefig(f"{args.oPath}{figPath}{rec.type}{rec.no}_{rec.name}")
                 plt.clf()
                 plt.close("all")
-                debugprint(f"  {args.oPath}{figPath}{rec.type}{rec.no}_{rec.name}")
+                debugprint(f"  {args.oPath}{figPath}{rec.type}{rec.no}_{rec.name}.png is added")
                 print(f"Printing individual figures: {int(100*(records.index(rec)+1)/len(records))}%")
                 gc.collect()
 
@@ -425,7 +490,7 @@ def saveFigures():
         # find a record with matching name to the current loop's name in all records
         for rec in records:
             if ("Overall" + rec.name) == orec.name and orec.type == rec.type:
-                debugprint(f"processing {rec.name}{rec.type}{rec.no} for {orec.name}{orec.type}")
+                debugprint(f"    processing {rec.name}{rec.type}{rec.no} for {orec.name}{orec.type}")
 
                 # make 3 row plot for different zoom levels
                 plt.subplot(3, 1, 1)
@@ -508,7 +573,7 @@ def saveReport():
     # insert summary figures
     for orec in overall_records:  # for all names in records
         if "Dropped" not in orec.name and "TrafficSource" not in orec.name:
-            report.pageBreak()
+            #report.pageBreak()
             report.add_line(f"     {orec.name} for all {orec.type}")
             report.insertRecordDetailText(orec, f"{args.oPath}{figPath}{orec.type}_{orec.name}.png")  # and put that figure into report
             debugprint(f"    {orec.name}.png is inserted")
@@ -517,18 +582,26 @@ def saveReport():
     print(f"Creating pdf report - PerSwitch Statistics")
     if not args.summaryOnly:
         report.pageBreak()
-        nonp = True
         report.add_heading_lvl1("2. Per-Switch Statistics")
         for rsw in rec_sws:  # for all switch no.s
             i = rec_sws.index(rsw)
-            nonp = False if nonp else report.pageBreak()
-            nonp2 = True
+            report.pageBreak()
             report.add_heading_lvl2(f"2.{i + 1}. SW{rsw} Statistics")
+            debugprint(f"      Will add SWQueueingTime#Port Histograms...")
+            for rec in records:
+                if rsw == rec.no and "SW" == rec.type:
+                    if "SWQueueingTime#Port" in rec.name:
+                        if len(rec.data) <= 1:
+                            continue
+                        debugprint(f"        {args.oPath}{figPath}Histogram_{rec.name}SW{rsw}.png")
+                        #report.pageBreak()
+                        report.add_line(f"    Histogram_{rec.name}SW{rsw}")
+                        report.insertImage(f"{args.oPath}{figPath}Histogram_{rec.name}SW{rsw}.png")
             for rn in rec_names:  # for all names in records
                 for rec_sw in records_sw:  # in all switch records
                     if rsw == rec_sw.no and rn == rec_sw.name:  # if that name of record and switch no found
                         debugprint(f"      {rn}")
-                        nonp2 = False if nonp2 else report.pageBreak()
+                        #report.pageBreak()
                         report.add_line(f"    {rec_sw.name}")
                         report.insertRecordDetailText(rec_sw, f"{args.oPath}{figPath}{rec_sw.type}{rec_sw.no}_{rec_sw.name}.png")
             print(f"    SW{rsw} is inserted")
@@ -537,13 +610,12 @@ def saveReport():
     print(f"Creating pdf report - PerVL Statistics")
     if not args.summaryOnly:
         report.pageBreak()
-        nonp = True
         report.add_heading_lvl1("3. Per-VL Statistics")
 
         for rvl in rec_vls:  # for all vl no.s
+            debugprint(f"    VL{rvl} will be inserted ...")
             i = rec_vls.index(rvl)
-            nonp = False if nonp else report.pageBreak()
-            nonp2 = True
+            report.pageBreak()
             report.add_heading_lvl2(f"3.{i + 1}. VL{rvl} Statistics")
 
             # print total packet count and dropped ones
@@ -558,19 +630,36 @@ def saveReport():
             report.add_line_v2(f"Total Frame Count", total_packets)
             report.add_line_v2(f"Dropped Frame Count", dropped_packets)
             report.add_line_v2(f"Dropped Frame Percentage", dropped_packets / total_packets if 0 != total_packets else 0)
-            nonp2 = False if nonp2 else report.pageBreak()
+            #report.pageBreak()
 
             # print histograms
+            debugprint(f"      Will add Interarrival Histogram...")
             report.insertImage(f"{args.oPath}{figPath}VL{rvl}_InterArrival.png")
+            debugprint(f"        {args.oPath}{figPath}VL{rvl}_InterArrival.png added")
+            #report.pageBreak()
 
+            debugprint(f"      Will add LatencyAt Histograms...")
+            for rec in records:
+                #debugprint(f"          Checking {rec} ->")
+                if rvl == rec.no and "VL" == rec.type:
+                    if "LatencyAt" in rec.name:
+                        if len(rec.data) <= 1:
+                            continue
+                        debugprint(f"        {args.oPath}{figPath}Histogram_{rec.name}VL{rvl}.png")
+                        #report.pageBreak()
+                        report.add_line(f"    Histogram_{rec.name}VL{rvl}")
+                        report.insertImage(f"{args.oPath}{figPath}Histogram_{rec.name}VL{rvl}.png")
+
+            debugprint(f"      Will add all records...")
             for rn in rec_names:  # for all names
                 if "Dropped" not in rn and "TrafficSource" not in rn:
                     for rec_vl in records_vl:  # in all VL records
                         if rvl == rec_vl.no and rn == rec_vl.name:  # if record no and name matches
-                            debugprint(f"      {rn}")
-                            nonp2 = False if nonp2 else report.pageBreak()
-                            report.add_line(f"    {rec_vl.name}")
+                            debugprint(f"        {args.oPath}{figPath}{rec_vl.type}{rec_vl.no}_{rec_vl.name}.png")
+                            #report.pageBreak()
+                            report.add_line(f"    {rec_vl.type}{rec_vl.no}_{rec_vl.name}")
                             report.insertRecordDetailText(rec_vl, f"{args.oPath}{figPath}{rec_vl.type}{rec_vl.no}_{rec_vl.name}.png")
+
             print(f"    VL{rvl} is inserted")
 
     print(f"Saving report")
