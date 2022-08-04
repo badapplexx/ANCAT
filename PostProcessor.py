@@ -1,3 +1,5 @@
+__license__ = "LGPLv3"
+
 import os
 import matplotlib
 import matplotlib.pyplot as plt

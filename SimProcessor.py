@@ -1,3 +1,5 @@
+__license__ = "LGPLv3"
+
 import argparse
 import subprocess
 import psutil
