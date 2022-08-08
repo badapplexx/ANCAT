@@ -43,15 +43,18 @@ if __name__ == "__main__":
         f.write('#!/bin/sh\n')
         f.write('\n')
         f.write('echo start ...\n')
-        s = 'cd ' + sim_ini_path + '\n'
-        s = s.replace("C:\\", "/c/").replace("\\", "/")
-        f.write(s)
-        s = f'PATH={omnetpp_path}\\bin:\\opt\\mingw64\\bin:{qlib_path}:"$PATH" '
-        s += f'{sim_exe_path}\\{sim_exe_name} {sim_exe_flags}{sim_exe_path}:{qlib_path} '
-        s += f'{sim_ini_path}\\{sim_ini_name}\n'
-        s = s.replace("C:\\", "/c/").replace("\\", "/")
-        f.write(s)
+        f.write('cd `dirname $0`\n')
+        f.write('PATH=/c/omnetpp-6.0/bin:/opt/mingw64/bin:../../queueinglib:"$PATH" '
+                '../src/afdx.exe -m -u Cmdenv -c General -n ../src/:../../queueinglib AutoNetwork.ini\n')
         f.write('echo finish ...\n')
+        #s = 'cd ' + sim_ini_path + '\n'
+        #s = s.replace("C:\\", "/c/").replace("\\", "/")
+        #f.write(s)
+        #s = f'PATH={omnetpp_path}\\bin:\\opt\\mingw64\\bin:{qlib_path}:"$PATH" '
+        #s += f'{sim_exe_path}\\{sim_exe_name} {sim_exe_flags}{sim_exe_path}:{qlib_path} '
+        #s += f'{sim_ini_path}\\{sim_ini_name}\n'
+        #s = s.replace("C:\\", "/c/").replace("\\", "/")
+        #f.write(s)
 
         # count minttys in process before running
     running_bash_old = 0
